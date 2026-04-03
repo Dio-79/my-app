@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/Studentinfo.jsx", "Students/Footer.jsx", "app/page.tsx", "app/Project/Auth/firebase.js"  ],
   "exclude": ["node_modules"]
 }
