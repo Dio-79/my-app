@@ -12,6 +12,7 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { db } from "../Auth/firebase";
+import Disscussion from "../DiscussionBoard/post.json"
 
 /* ================= THEME ================= */
 const theme = {

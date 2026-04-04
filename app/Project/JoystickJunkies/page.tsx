@@ -7,7 +7,7 @@ import { UserAuthContextProvider, useUserAuth } from "../Auth/auth-context";
 import { WhatNewDropdown } from "../Services/WhatsNew";
 import { MemberDropdown } from "../Services/Member";
 import { Home } from "../Services/Home";
-
+import service from "../Services/Service.json"
 /* ================= THEME CONSTANTS ================= */
 const theme = {
   background: "#1a1a1a",

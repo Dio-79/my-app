@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1",
+    "name": "General Gaming Discussion"
+  },
+  {
+    "id": "2",
+    "name": "PC Hardware & Builds"
+  },
+  {
+    "id": "3",
+    "name": "Console Gaming"
+  },
+  {
+    "id": "4",
+    "name": "Esports & Competitive"
+  },
+  {
+    "id": "5",
+    "name": "Game Development"
+  },
+  {
+    "id": "6",
+    "name": "Indie Games Showcase"
+  },
+  {
+    "id": "7",
+    "name": "VR & AR Gaming"
+  },
+  {
+    "id": "8",
+    "name": "Retro Gaming"
+  },
+  {
+    "id": "9",
+    "name": "Streaming & Content Creation"
+  },
+  {
+    "id": "10",
+    "name": "Game Reviews & Recommendations"
+  }
+]

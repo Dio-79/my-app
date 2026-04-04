@@ -1,0 +1,37 @@
+[
+  {
+    "id": "1",
+    "title": "Best gaming setup in 2026?",
+    "content": "What’s everyone using for their current setup? PC specs, monitors, etc.",
+    "likes": 45,
+    "createdAt": 1712000000000
+  },
+  {
+    "id": "2",
+    "title": "Is GTA VI worth the hype?",
+    "content": "Seen the trailers, but do you think it’ll actually live up to expectations?",
+    "likes": 120,
+    "createdAt": 1713000000000
+  },
+  {
+    "id": "3",
+    "title": "Top 5 FPS games right now",
+    "content": "Drop your list. Mine: COD, Valorant, Apex, CS2, Battlefield.",
+    "likes": 78,
+    "createdAt": 1712500000000
+  },
+  {
+    "id": "4",
+    "title": "Console vs PC debate (again)",
+    "content": "Let’s settle this once and for all… or not 😂",
+    "likes": 200,
+    "createdAt": 1711000000000
+  },
+  {
+    "id": "5",
+    "title": "Underrated indie games?",
+    "content": "Looking for hidden gems. Any suggestions?",
+    "likes": 32,
+    "createdAt": 1713200000000
+  }
+]
