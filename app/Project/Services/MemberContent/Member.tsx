@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/* ================= THEME CONSTANTS (Matching Main Code) ================= */
+/* ================= THEME CONSTANTS ================= */
 const theme = {
   background: "#1a1a1a",
   dropdownBg: "#222222",
@@ -11,32 +11,32 @@ const theme = {
   border: "#333",
   textMain: "#ffffff",
   textDim: "#a0a0a0",
-  hover: "#2a2a2a"
+  hover: "#2a2a2a",
 };
 
+/* ================= MEMBER ROUTES ================= */
+/* Make sure these match your folder structure in `app/` */
 const MemberRoutes = {
-  MemberList: "/member/list",
-  CurrentVisitor: "/member/visitor",
-  Billboard: "/member/billboard",
-  Trophies: "/member/trophies",
+  MemberList: "/project/member/list",
+  CurrentVisitor: "/project/member/visitor",
+  Billboard: "/project/member/billboard",
+  Trophies: "/project/member/trophies",
 };
 
 export function MemberDropdown() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
-  const handleSelect = (value: string) => {
+  const handleSelect = (key: keyof typeof MemberRoutes) => {
     setOpen(false);
-    const route = MemberRoutes[value as keyof typeof MemberRoutes];
-    if (route) {
-      router.push(route);
-    }
+    const route = MemberRoutes[key];
+    if (route) router.push(route);
   };
 
   return (
     <div style={{ position: "relative" }}>
-      {/* Trigger Button */}
-      <button 
+      {/* Dropdown trigger */}
+      <button
         onClick={() => setOpen(!open)}
         style={{
           background: "none",
@@ -48,21 +48,21 @@ export function MemberDropdown() {
           padding: "10px 5px",
           display: "flex",
           alignItems: "center",
-          gap: "5px"
+          gap: "5px",
         }}
       >
         MEMBERS <span style={{ fontSize: "0.6rem", color: theme.textDim }}>▼</span>
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown menu */}
       {open && (
         <>
-          {/* Transparent backdrop to close dropdown when clicking outside */}
-          <div 
-            onClick={() => setOpen(false)} 
-            style={{ position: "fixed", inset: 0, zIndex: 10 }} 
+          {/* Click outside to close */}
+          <div
+            onClick={() => setOpen(false)}
+            style={{ position: "fixed", inset: 0, zIndex: 10 }}
           />
-          
+
           <div
             style={{
               position: "absolute",
@@ -70,12 +70,12 @@ export function MemberDropdown() {
               left: 0,
               backgroundColor: theme.dropdownBg,
               border: `1px solid ${theme.border}`,
-              borderTop: `2px solid ${theme.primaryRed}`, // Top accent bar
+              borderTop: `2px solid ${theme.primaryRed}`,
               borderRadius: "2px",
               padding: "5px 0",
               width: "180px",
               zIndex: 11,
-              boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
+              boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
             }}
           >
             <DropdownItem label="Member List" onClick={() => handleSelect("MemberList")} />
@@ -90,7 +90,7 @@ export function MemberDropdown() {
   );
 }
 
-/* Internal helper for individual items to keep code clean */
+/* ================= DROPDOWN ITEM ================= */
 function DropdownItem({ label, onClick }: { label: string; onClick: () => void }) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -105,7 +105,7 @@ function DropdownItem({ label, onClick }: { label: string; onClick: () => void }
         color: isHovered ? theme.primaryRed : theme.textMain,
         backgroundColor: isHovered ? theme.hover : "transparent",
         fontSize: "0.85rem",
-        transition: "0.2s"
+        transition: "0.2s",
       }}
     >
       {label}
