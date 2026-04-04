@@ -1,57 +1,116 @@
-import {  useState } from "react";
+"use client";
 
-const WhatNew = {
-  newspost: () => console.log("Displaying new posts..."),
-  trending: () => console.log("Displaying trending topics..."),
-  search: () => console.log("Searching for content..."),
-  events: () => console.log("Displaying upcoming events..."),
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+/* ================= THEME CONSTANTS ================= */
+const theme = {
+  background: "#1a1a1a",
+  dropdownBg: "#222222",
+  primaryRed: "#e11d48",
+  border: "#333",
+  textMain: "#ffffff",
+  textDim: "#a0a0a0",
+  hover: "#2a2a2a"
 };
 
+const WhatNewRoutes = {
+  Newspost: "/whatnew/newspost",
+  Trending: "/whatnew/trending",
+  Search: "/whatnew/search",
+  Events: "/whatnew/events",
+};
 
-
-/* ================= DROPDOWNS ================= */
 export function WhatNewDropdown() {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<string>("");
+  const router = useRouter();
 
   const handleSelect = (value: string) => {
-    setSelected(value);   // 🔥 store selection
     setOpen(false);
-
-    WhatNew[value as keyof typeof WhatNew]?.(); // cleaner call
+    const route = WhatNewRoutes[value as keyof typeof WhatNewRoutes];
+    if (route) {
+      router.push(route);
+    }
   };
 
   return (
     <div style={{ position: "relative" }}>
-      <button onClick={() => setOpen(!open)}>What New ⬇</button>
+      {/* Trigger Button */}
+      <button 
+        onClick={() => setOpen(!open)}
+        style={{
+          background: "none",
+          border: "none",
+          color: theme.textMain,
+          fontSize: "0.85rem",
+          fontWeight: "bold",
+          cursor: "pointer",
+          padding: "10px 5px",
+          display: "flex",
+          alignItems: "center",
+          gap: "5px",
+          textTransform: "uppercase"
+        }}
+      >
+        Latest Updates <span style={{ fontSize: "0.6rem", color: theme.textDim }}>▼</span>
+      </button>
 
+      {/* Dropdown Menu */}
       {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "40px",
-            left: 0,
-            background: "blue",
-            border: "1px solid black",
-            borderRadius: "6px",
-            padding: "5px",
-            width: "170px",
-          }}
-        >
-          <div onClick={() => handleSelect("Newspost")}>New Posts</div>
-          <div onClick={() => handleSelect("Trending")}>Trending</div>
-          <div onClick={() => handleSelect("Search")}>Search</div>
-          <div onClick={() => handleSelect("Events")}>Events</div>
-        </div>
+        <>
+          {/* Close dropdown on outside click */}
+          <div 
+            onClick={() => setOpen(false)} 
+            style={{ position: "fixed", inset: 0, zIndex: 10 }} 
+          />
+          
+          <div
+            style={{
+              position: "absolute",
+              top: "45px",
+              left: 0,
+              backgroundColor: theme.dropdownBg,
+              border: `1px solid ${theme.border}`,
+              borderTop: `2px solid ${theme.primaryRed}`, // The "Gaming" accent bar
+              borderRadius: "2px",
+              padding: "5px 0",
+              width: "180px",
+              zIndex: 11,
+              boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
+            }}
+          >
+            <DropdownItem label="New Posts" onClick={() => handleSelect("Newspost")} />
+            <DropdownItem label="Trending" onClick={() => handleSelect("Trending")} />
+            <DropdownItem label="Search" onClick={() => handleSelect("Search")} />
+            <div style={{ height: "1px", backgroundColor: theme.border, margin: "5px 0" }} />
+            <DropdownItem label="Events" onClick={() => handleSelect("Events")} />
+          </div>
+        </>
       )}
+    </div>
+  );
+}
 
-      {/* 🔥 SHOW RESULT */}
-      <div style={{ marginTop: "10px" }}>
-        {selected === "Newspost" && <p>Showing new posts...</p>}
-        {selected === "Trending" && <p>Showing trending topics...</p>}
-        {selected === "Search" && <p>Search content here...</p>}
-        {selected === "Events" && <p>Upcoming events...</p>}
-      </div>
+/* Helper for hover functionality */
+function DropdownItem({ label, onClick }: { label: string; onClick: () => void }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        padding: "10px 15px",
+        cursor: "pointer",
+        color: isHovered ? theme.primaryRed : theme.textMain,
+        backgroundColor: isHovered ? theme.hover : "transparent",
+        fontSize: "0.85rem",
+        transition: "background 0.2s, color 0.2s",
+        fontWeight: "500"
+      }}
+    >
+      {label}
     </div>
   );
 }

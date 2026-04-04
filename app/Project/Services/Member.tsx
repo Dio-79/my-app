@@ -1,56 +1,114 @@
-import { useState } from "react";
+"use client";
 
-const Member = {
-  MemberList: () => console.log("Member List selected"),
-  CurrentVisitor: () => console.log("Current Visitor selected"),
-  Billboard: () => console.log("Billboard selected"),
-  Trophies: () => console.log("Trophies selected"),
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+/* ================= THEME CONSTANTS (Matching Main Code) ================= */
+const theme = {
+  background: "#1a1a1a",
+  dropdownBg: "#222222",
+  primaryRed: "#e11d48",
+  border: "#333",
+  textMain: "#ffffff",
+  textDim: "#a0a0a0",
+  hover: "#2a2a2a"
+};
+
+const MemberRoutes = {
+  MemberList: "/member/list",
+  CurrentVisitor: "/member/visitor",
+  Billboard: "/member/billboard",
+  Trophies: "/member/trophies",
 };
 
 export function MemberDropdown() {
-  const [selectedMember, setSelectedMember] = useState<string>("");
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   const handleSelect = (value: string) => {
-    setSelectedMember(value);
     setOpen(false);
-
-    Member[value as keyof typeof Member]?.(); // cleaner
+    const route = MemberRoutes[value as keyof typeof MemberRoutes];
+    if (route) {
+      router.push(route);
+    }
   };
 
   return (
     <div style={{ position: "relative" }}>
-      <button onClick={() => setOpen(!open)}>Member ⬇</button>
+      {/* Trigger Button */}
+      <button 
+        onClick={() => setOpen(!open)}
+        style={{
+          background: "none",
+          border: "none",
+          color: theme.textMain,
+          fontSize: "0.85rem",
+          fontWeight: "bold",
+          cursor: "pointer",
+          padding: "10px 5px",
+          display: "flex",
+          alignItems: "center",
+          gap: "5px"
+        }}
+      >
+        MEMBERS <span style={{ fontSize: "0.6rem", color: theme.textDim }}>▼</span>
+      </button>
 
+      {/* Dropdown Menu */}
       {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "40px",
-            left: 0,
-            background: "blue",
-            border: "1px solid black",
-            borderRadius: "6px",
-            padding: "5px",
-            width: "150px",
-          }}
-        >
-          <div onClick={() => handleSelect("MemberList")}>Member List</div>
-          <div onClick={() => handleSelect("CurrentVisitor")}>
-            Current Visitor
+        <>
+          {/* Transparent backdrop to close dropdown when clicking outside */}
+          <div 
+            onClick={() => setOpen(false)} 
+            style={{ position: "fixed", inset: 0, zIndex: 10 }} 
+          />
+          
+          <div
+            style={{
+              position: "absolute",
+              top: "45px",
+              left: 0,
+              backgroundColor: theme.dropdownBg,
+              border: `1px solid ${theme.border}`,
+              borderTop: `2px solid ${theme.primaryRed}`, // Top accent bar
+              borderRadius: "2px",
+              padding: "5px 0",
+              width: "180px",
+              zIndex: 11,
+              boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
+            }}
+          >
+            <DropdownItem label="Member List" onClick={() => handleSelect("MemberList")} />
+            <DropdownItem label="Current Visitor" onClick={() => handleSelect("CurrentVisitor")} />
+            <DropdownItem label="Billboard" onClick={() => handleSelect("Billboard")} />
+            <div style={{ height: "1px", backgroundColor: theme.border, margin: "5px 0" }} />
+            <DropdownItem label="Trophies" onClick={() => handleSelect("Trophies")} />
           </div>
-          <div onClick={() => handleSelect("Billboard")}>Billboard</div>
-          <div onClick={() => handleSelect("Trophies")}>Trophies</div>
-        </div>
+        </>
       )}
+    </div>
+  );
+}
 
-      {/* 🔥 UI OUTPUT */}
-      <div style={{ marginTop: "10px" }}>
-        {selectedMember === "MemberList" && <p>Member List Content</p>}
-        {selectedMember === "CurrentVisitor" && <p>Current Visitor Content</p>}
-        {selectedMember === "Billboard" && <p>Billboard Content</p>}
-        {selectedMember === "Trophies" && <p>Trophies Content</p>}
-      </div>
+/* Internal helper for individual items to keep code clean */
+function DropdownItem({ label, onClick }: { label: string; onClick: () => void }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        padding: "10px 15px",
+        cursor: "pointer",
+        color: isHovered ? theme.primaryRed : theme.textMain,
+        backgroundColor: isHovered ? theme.hover : "transparent",
+        fontSize: "0.85rem",
+        transition: "0.2s"
+      }}
+    >
+      {label}
     </div>
   );
 }

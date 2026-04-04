@@ -1,32 +1,33 @@
 "use client";
 
 import { useContext, createContext, useState, useEffect, ReactNode } from "react";
-import {
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-  User,
-} from "firebase/auth";
-
+import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { auth, googleAuthProvider } from "./firebase";
 
 interface AuthContextType {
   user: User | null;
+  loading: boolean; // 
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
+export function UserAuthContextProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false); // 🔹 new
 
   const signInWithGoogle = async () => {
+    if (loading) return; // prevent multiple popups
+    setLoading(true);
+
     try {
       const result = await signInWithPopup(auth, googleAuthProvider);
       setUser(result.user);
     } catch (error) {
       console.error("Error signing in with Google: ", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,9 +47,8 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  
   return (
-    <AuthContext.Provider value={{ user, signInWithGoogle, signOutUser }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOutUser }}>
       {children}
     </AuthContext.Provider>
   );
