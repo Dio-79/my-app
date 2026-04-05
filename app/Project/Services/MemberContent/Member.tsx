@@ -15,12 +15,11 @@ const THEME = {
 };
 
 const MemberRoutes = {
-  MemberList: "/Project/Services/MemberContent/memberlist",
-  CurrentVisitor: "/Project/Services/MemberContent/currentvisitor",
-  Billboard: "/Project/Services/MemberContent/billboard",
-  Trophies: "/Project/Services/MemberContent/trophies",
+  MemberList: "/project/member/list",
+  CurrentVisitor: "/project/member/visitor",
+  Billboard: "/project/member/billboard",
+  Trophies: "/project/member/trophies"
 };
-
 export function MemberDropdown() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
