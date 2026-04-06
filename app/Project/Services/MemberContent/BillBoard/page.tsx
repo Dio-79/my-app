@@ -1,36 +1,36 @@
 "use client";
 
+import { CSSProperties } from "react";
+
 /* ================= THEME ================= */
 const theme = {
   background: "#1a1a1a",
+  dropdownBg: "#222222",
   border: "#333",
   textMain: "#ffffff",
   primaryRed: "#e11d48",
 };
 
-export default function BillboardPage() {
-  const posts = [
-    "🔥 New tournament announced!",
-    "🎮 Top players this week",
-    "🚀 Join our esports team"
-  ];
+/* ================= DATA ================= */
+const posts = [
+  "🔥 New tournament announced!",
+  "🎮 Top players this week",
+  "🚀 Join our esports team",
+];
 
+/* ================= PAGE ================= */
+export default function BillboardPage() {
   return (
     <div style={pageStyle}>
       <h1 style={titleStyle}>
-        COMMUNITY <span style={{ color: "white" }}>BILLBOARD</span>
+        COMMUNITY <span style={{ color: theme.textMain }}>BILLBOARD</span>
       </h1>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {posts.map((post, i) => (
           <div key={i} style={cardStyle}>
-            <div style={iconContainerStyle}>
-              <div style={accentLineStyle} />
-            </div>
-
-            <div style={{ fontWeight: "600", fontSize: "1.1rem" }}>
-              {post}
-            </div>
+            <div style={accentLineStyle} />
+            <div style={{ fontWeight: "600", fontSize: "1.1rem" }}>{post}</div>
           </div>
         ))}
       </div>
@@ -39,8 +39,7 @@ export default function BillboardPage() {
 }
 
 /* ================= STYLES ================= */
-
-const pageStyle = {
+const pageStyle: CSSProperties = {
   backgroundColor: theme.background,
   minHeight: "100vh",
   padding: "40px",
@@ -48,7 +47,7 @@ const pageStyle = {
   fontFamily: "sans-serif",
 };
 
-const titleStyle = {
+const titleStyle: CSSProperties = {
   fontSize: "1.4rem",
   fontWeight: "bold",
   color: theme.primaryRed,
@@ -59,25 +58,21 @@ const titleStyle = {
   letterSpacing: "1px",
 };
 
-const cardStyle = {
+const cardStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   padding: "20px",
-  backgroundColor: "#222",
+  backgroundColor: theme.dropdownBg,
   border: `1px solid ${theme.border}`,
   borderRadius: "3px",
   boxShadow: "0 4px 6px rgba(0,0,0,0.2)",
 };
 
-const accentLineStyle = {
+const accentLineStyle: CSSProperties = {
   width: "4px",
   height: "24px",
   backgroundColor: theme.primaryRed,
   marginRight: "15px",
   borderRadius: "2px",
-};
-
-const iconContainerStyle = {
-  display: "flex",
-  alignItems: "center",
+  flexShrink: 0,
 };
