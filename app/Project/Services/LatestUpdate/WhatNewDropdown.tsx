@@ -15,10 +15,10 @@ const theme = {
 };
 
 const WhatNewRoutes = {
-  Newspost: "/Project/WhatNew/Newspost",
-  Trending: "/Project/WhatNew/Trending",
-  Search: "/Project/WhatNew/Search",
-  Events: "/Project/WhatNew/Events",
+  Newspost: "/Project/LatestUpdate/Newspost",
+  Trending: "/Project/LatestUpdate/Trending",
+  Search: "/Project/LatestUpdate/Search",
+  Events: "/Project/LatestUpdate/Events",
 };
 
 
