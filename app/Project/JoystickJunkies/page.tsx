@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../Auth/firebase";
 import { UserAuthContextProvider, useUserAuth } from "../Auth/auth-context";
-import { WhatNewDropdown } from "../Services/WhatsNew";
-import { MemberDropdown } from "../Services/MemberContent/page";
+import { WhatNewDropdown } from "../Services/LatestUpdate/WhatsNew";
+import { MemberDropdown } from "../Services/MemberContent/MemberDropdown";
 import { Home } from "../Services/Home";
 import service from "../Services/Service.json";
 /* ================= THEME CONSTANTS ================= */
@@ -48,7 +48,7 @@ function Navbar() {
       <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
         <Home />
         <WhatNewDropdown />
-        <MemberDropdown/>
+        <MemberDropdown />
       </div>
 
       <div style={{ display: "flex", gap: "10px" }}>

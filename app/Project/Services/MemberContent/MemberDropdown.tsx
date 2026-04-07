@@ -16,10 +16,10 @@ const THEME = {
 
 /* ================= ROUTES ================= */
 const MemberRoutes: Record<string, string> = {
-  MemberList: "/project/member/list",
-  CurrentVisitor: "/project/member/visitor",
-  Billboard: "/project/member/billboard",
-  Trophies: "/project/member/trophies",
+  MemberList: "/Project/Services/MemberContent/MemberList",
+  CurrentVisitor: "/Project/Services/MemberContent/CurrentVisitor",
+  Billboard: "/Project/Services/MemberContent/billboard",
+  Trophies: "/Project/Services/MemberContent/Trophies",
 };
 
 const menuItems = [
