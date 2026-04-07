@@ -15,12 +15,11 @@ const theme = {
 };
 
 const WhatNewRoutes = {
-  Newspost: "/Project/LatestUpdate/Newspost",
-  Trending: "/Project/LatestUpdate/Trending",
-  Search: "/Project/LatestUpdate/Search",
-  Events: "/Project/LatestUpdate/Events",
+  Newspost: "/Project/Services/LatestUpdate/Newspost",
+  Trending: "/Project/Services/LatestUpdate/Trending",
+  Search: "/Project/Services/LatestUpdate/Search",
+  Events: "/Project/Services/LatestUpdate/Events",
 };
-
 
 export function WhatNewDropdown() {
   const [open, setOpen] = useState(false);
