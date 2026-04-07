@@ -15,10 +15,10 @@ const theme = {
 };
 
 const WhatNewRoutes = {
-  Newspost: "/whatnew/newspost",
-  Trending: "/whatnew/trending",
-  Search: "/whatnew/search",
-  Events: "/whatnew/events",
+  Newspost: "/whatnew/NewPost",
+  Trending: "/whatnew/Trending",
+  Search: "/whatnew/Search",
+  Events: "/whatnew/Events"
 };
 
 export function WhatNewDropdown() {
