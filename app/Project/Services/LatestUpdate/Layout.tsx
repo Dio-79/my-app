@@ -1,5 +1,6 @@
+"use client";
 import { UserAuthContextProvider } from "../../Auth/auth-context";
-import { MemberDropdown } from "./MemberDropdown";
+import { MemberDropdown } from "../MemberContent/MemberDropdown";
 import { Home } from "../Home";
 import { WhatNewDropdown } from "../LatestUpdate/WhatNewDropdown";
 

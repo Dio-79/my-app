@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../Auth/firebase";
 import { UserAuthContextProvider, useUserAuth } from "../Auth/auth-context";
-import { WhatNewDropdown } from "../Services/LatestUpdate/WhatsNew";
+import { WhatNewDropdown } from "../Services/LatestUpdate/WhatNewDropdown";
 import { MemberDropdown } from "../Services/MemberContent/MemberDropdown";
 import { Home } from "../Services/Home";
 import service from "../Services/Service.json";
