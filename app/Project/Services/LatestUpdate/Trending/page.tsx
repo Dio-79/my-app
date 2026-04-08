@@ -1,122 +1,140 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "../../../Auth/firebase";
 
-/* ================= SHARED NAVIGATION THEME ================= */
+/* ================= TYPES ================= */
+type Post = {
+  id: string;
+  title: string;
+  content: string;
+  likes: number;
+};
+
+/* ================= THEME ================= */
 const THEME = {
   background: "#1a1a1a",
-  dropdownBg: "#222222",
+  cardBg: "#222222",
   primaryRed: "#e11d48",
   border: "#333",
   textMain: "#ffffff",
   textDim: "#a0a0a0",
-  hover: "#2a2a2a"
 };
 
-const MemberRoutes = {
-  New: "/project/member/new",
-  Trending: "/project/member/trending",
-  Search: "/project/member/search",
-  Trophies: "/project/member/trophies"
-};
+/* ================= PAGE ================= */
+export default function TrendingPage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default function MemberLayout({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
+  useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        // 🔥 Sort by MOST LIKES (Trending logic)
+        const ref = collection(db, "posts");
+        const q = query(ref, orderBy("likes", "desc"));
 
-  const handleNavigate = (path: string) => {
-    setOpen(false);
-    router.push(path);
-  };
+        const snapshot = await getDocs(q);
+
+        const data: Post[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Post, "id">),
+        }));
+
+        setPosts(data);
+      } catch (err) {
+        console.error("Trending fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrending();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ padding: "20px", color: THEME.textDim }}>
+        Loading trending posts...
+      </div>
+    );
+  }
 
   return (
-    <div style={{ backgroundColor: THEME.background, minHeight: "100vh" }}>
-      {/* GLOBAL NAVBAR */}
-      <nav style={navBarStyle}>
-        <div style={{ position: "relative" }}>
-          <button onClick={() => setOpen(!open)} style={triggerButtonStyle}>
-            EXPLORE FEED <span style={{ fontSize: "0.6rem" }}>{open ? "▲" : "▼"}</span>
-          </button>
+    <div style={pageStyle}>
+      <h1 style={titleStyle}>🔥 TRENDING POSTS</h1>
 
-          {open && (
-            <>
-              <div onClick={() => setOpen(false)} style={backdropStyle} />
-              <div style={dropdownContainerStyle}>
-                <DropdownItem label="🆕 New Posts" active={pathname === MemberRoutes.New} onClick={() => handleNavigate(MemberRoutes.New)} />
-                <DropdownItem label="🔥 Trending" active={pathname === MemberRoutes.Trending} onClick={() => handleNavigate(MemberRoutes.Trending)} />
-                <DropdownItem label="🔍 Search" active={pathname === MemberRoutes.Search} onClick={() => handleNavigate(MemberRoutes.Search)} />
-                <div style={{ height: "1px", backgroundColor: THEME.border, margin: "5px 0" }} />
-                <DropdownItem label="🏆 Trophies" active={pathname === MemberRoutes.Trophies} onClick={() => handleNavigate(MemberRoutes.Trophies)} />
+      {posts.length === 0 ? (
+        <p style={{ color: THEME.textDim }}>No trending posts yet.</p>
+      ) : (
+        posts.map((post, index) => (
+          <div key={post.id} style={cardStyle}>
+            {/* Rank Badge */}
+            <div style={rankStyle}>#{index + 1}</div>
+
+            <div style={{ flex: 1 }}>
+              <h3 style={postTitleStyle}>{post.title}</h3>
+              <p style={postContentStyle}>{post.content}</p>
+
+              <div style={metaStyle}>
+                ❤️ {post.likes} likes
               </div>
-            </>
-          )}
-        </div>
-      </nav>
-
-      {/* PAGE CONTENT */}
-      <main style={{ maxWidth: "800px", margin: "0 auto" }}>
-        {children}
-      </main>
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 }
 
-/* ================= COMPONENTS & STYLES ================= */
+/* ================= STYLES ================= */
 
-function DropdownItem({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        padding: "12px 18px",
-        cursor: "pointer",
-        color: active ? THEME.primaryRed : THEME.textMain,
-        backgroundColor: "transparent",
-        fontSize: "0.85rem",
-        borderLeft: active ? `3px solid ${THEME.primaryRed}` : "3px solid transparent",
-        transition: "0.2s"
-      }}
-    >
-      {label}
-    </div>
-  );
-}
-
-const navBarStyle: React.CSSProperties = {
-  padding: "15px 20px",
-  borderBottom: `1px solid ${THEME.border}`,
-  display: "flex",
-  justifyContent: "center"
+const pageStyle: React.CSSProperties = {
+  backgroundColor: THEME.background,
+  minHeight: "100vh",
+  padding: "40px 20px",
+  fontFamily: "sans-serif",
 };
 
-const triggerButtonStyle: React.CSSProperties = {
-  background: "none",
-  border: `1px solid ${THEME.border}`,
+const titleStyle: React.CSSProperties = {
   color: THEME.textMain,
-  padding: "8px 16px",
-  borderRadius: "4px",
-  cursor: "pointer",
+  fontSize: "1.5rem",
   fontWeight: "bold",
-  fontSize: "0.75rem",
-  letterSpacing: "1px"
+  marginBottom: "25px",
 };
 
-const dropdownContainerStyle: React.CSSProperties = {
-  position: "absolute",
-  top: "40px",
-  left: "50%",
-  transform: "translateX(-50%)",
-  width: "200px",
-  backgroundColor: THEME.dropdownBg,
+const cardStyle: React.CSSProperties = {
+  display: "flex",
+  gap: "15px",
+  backgroundColor: THEME.cardBg,
   border: `1px solid ${THEME.border}`,
-  zIndex: 100,
-  boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
+  borderRadius: "4px",
+  padding: "20px",
+  marginBottom: "15px",
+  alignItems: "flex-start",
 };
 
-const backdropStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  zIndex: 90
+const rankStyle: React.CSSProperties = {
+  fontSize: "1.2rem",
+  fontWeight: "bold",
+  color: THEME.primaryRed,
+  minWidth: "30px",
+};
+
+const postTitleStyle: React.CSSProperties = {
+  margin: "0 0 10px 0",
+  color: THEME.primaryRed,
+};
+
+const postContentStyle: React.CSSProperties = {
+  margin: 0,
+  color: THEME.textMain,
+  fontSize: "0.9rem",
+  lineHeight: "1.5",
+};
+
+const metaStyle: React.CSSProperties = {
+  marginTop: "10px",
+  fontSize: "0.75rem",
+  color: THEME.textDim,
 };

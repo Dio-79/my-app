@@ -1,63 +1,54 @@
 "use client";
 
-import { useContext, createContext, useState, useEffect, ReactNode } from "react";
-import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
-import { auth, googleAuthProvider } from "./firebase";
+import { createContext, useContext, useEffect, useState } from "react";
+import { auth } from "./firebase";
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from "firebase/auth";
+
+interface Profile {
+  username: string;
+  photoURL: string;
+}
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean; // 
+  profile: Profile | null;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-export function UserAuthContextProvider({ children }: { children: ReactNode }) {
+export function UserAuthContextProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false); // 🔹 new
-
-  const signInWithGoogle = async () => {
-    if (loading) return; // prevent multiple popups
-    setLoading(true);
-
-    try {
-      const result = await signInWithPopup(auth, googleAuthProvider);
-      setUser(result.user);
-    } catch (error) {
-      console.error("Error signing in with Google: ", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signOutUser = async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-    } catch (error) {
-      console.error("Error signing out: ", error);
-    }
-  };
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+
+      if (u) {
+        setProfile({
+          username: u.displayName || "User",
+          photoURL: u.photoURL || ""
+        });
+      }
     });
-    return () => unsubscribe();
+
+    return () => unsub();
   }, []);
 
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  };
+
+  const signOutUser = () => signOut(auth);
+
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOutUser }}>
+    <AuthContext.Provider value={{ user, profile, signInWithGoogle, signOutUser }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useUserAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useUserAuth must be used within an AuthContextProvider");
-  }
-  return context;
-};
+export const useUserAuth = () => useContext(AuthContext);

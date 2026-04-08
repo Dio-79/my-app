@@ -5,7 +5,7 @@ import { CSSProperties } from "react";
 /* ================= THEME ================= */
 const theme = {
   background: "#1a1a1a",
-  dropdownBg: "#222222",
+  cardBg: "#222222",
   border: "#333",
   textMain: "#ffffff",
   primaryRed: "#e11d48",
@@ -23,14 +23,14 @@ export default function BillboardPage() {
   return (
     <div style={pageStyle}>
       <h1 style={titleStyle}>
-        COMMUNITY <span style={{ color: theme.textMain }}>BILLBOARD</span>
+        COMMUNITY <span style={{ color: "white" }}>BILLBOARD</span>
       </h1>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div style={listStyle}>
         {posts.map((post, i) => (
           <div key={i} style={cardStyle}>
-            <div style={accentLineStyle} />
-            <div style={{ fontWeight: "600", fontSize: "1.1rem" }}>{post}</div>
+            <div style={accentStyle} />
+            <span>{post}</span>
           </div>
         ))}
       </div>
@@ -55,24 +55,28 @@ const titleStyle: CSSProperties = {
   paddingBottom: "15px",
   marginBottom: "30px",
   textTransform: "uppercase",
-  letterSpacing: "1px",
+};
+
+const listStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
 };
 
 const cardStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   padding: "20px",
-  backgroundColor: theme.dropdownBg,
+  backgroundColor: theme.cardBg,
   border: `1px solid ${theme.border}`,
-  borderRadius: "3px",
+  borderRadius: "4px",
   boxShadow: "0 4px 6px rgba(0,0,0,0.2)",
 };
 
-const accentLineStyle: CSSProperties = {
+const accentStyle: CSSProperties = {
   width: "4px",
   height: "24px",
   backgroundColor: theme.primaryRed,
   marginRight: "15px",
   borderRadius: "2px",
-  flexShrink: 0,
 };

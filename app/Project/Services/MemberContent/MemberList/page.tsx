@@ -1,43 +1,52 @@
 "use client";
 
+import { CSSProperties } from "react";
+
 /* ================= THEME ================= */
 const theme = {
   background: "#1a1a1a",
   border: "#333",
   textMain: "#ffffff",
-  primaryRed: "#e11d48", // 
+  textDim: "#a0a0a0",
+  primaryRed: "#e11d48",
 };
+
+/* ================= TYPES ================= */
+interface Member {
+  id: number;
+  username: string;
+}
 
 /* ================= PAGE ================= */
 export default function MemberListPage() {
-  const members = ["PlayerOne", "ProGamer", "NoScopeKing"];
+  const members: Member[] = [
+    { id: 1, username: "PlayerOne" },
+    { id: 2, username: "ProGamer" },
+    { id: 3, username: "NoScopeKing" },
+    { id: 4, username: "EliteSniper" },
+  ];
 
   return (
     <div style={pageStyle}>
-      <h1
-        style={{
-          ...titleStyle,
-          borderBottom: `2px solid ${theme.primaryRed}`,
-          paddingBottom: "10px",
-        }}
-      >
-        MEMBER LIST
+      <h1 style={titleStyle}>
+        MEMBER <span style={{ color: "white" }}>LIST</span>
       </h1>
 
-      {members.map((m, i) => (
-        <div key={i} style={cardStyle}>
-          <span style={{ color: theme.primaryRed, marginRight: "10px" }}>
-            ●
-          </span>
-          {m}
-        </div>
-      ))}
+      <div style={listContainer}>
+        {members.map((member) => (
+          <div key={member.id} style={cardStyle}>
+            <span style={dotStyle}>●</span>
+            <span>{member.username}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 /* ================= STYLES ================= */
-const pageStyle = {
+
+const pageStyle: CSSProperties = {
   backgroundColor: theme.background,
   minHeight: "100vh",
   padding: "40px",
@@ -45,18 +54,34 @@ const pageStyle = {
   fontFamily: "sans-serif",
 };
 
-const titleStyle = {
-  fontSize: "1.2rem",
-  marginBottom: "20px",
+const titleStyle: CSSProperties = {
+  fontSize: "1.4rem",
   fontWeight: "bold",
+  color: theme.primaryRed,
+  borderBottom: `2px solid ${theme.border}`,
+  paddingBottom: "15px",
+  marginBottom: "30px",
+  textTransform: "uppercase",
+  letterSpacing: "1px",
 };
 
-const cardStyle = {
+const listContainer: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+};
+
+const cardStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
   padding: "15px 20px",
   backgroundColor: "#222",
   border: `1px solid ${theme.border}`,
-  marginBottom: "8px",
-  borderRadius: "3px",
-  display: "flex",
-  alignItems: "center",
+  borderRadius: "4px",
+  transition: "0.2s",
+};
+
+const dotStyle: CSSProperties = {
+  color: theme.primaryRed,
+  marginRight: "10px",
 };
