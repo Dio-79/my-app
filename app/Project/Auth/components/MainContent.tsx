@@ -19,7 +19,7 @@ import { auth } from "../firebase";
 /* ================= TYPE ================= */
 interface AuthContextType {
   user: User | null;
-  loading: boolean; 
+  loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
 }
@@ -34,11 +34,10 @@ export function UserAuthContextProvider({
   children: ReactNode;
 }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
 
   const provider = new GoogleAuthProvider();
 
-  /* LOGIN */
   const signInWithGoogle = async () => {
     try {
       setLoading(true);
@@ -50,7 +49,6 @@ export function UserAuthContextProvider({
     }
   };
 
-  /* LOGOUT */
   const signOutUser = async () => {
     try {
       setLoading(true);
@@ -62,11 +60,10 @@ export function UserAuthContextProvider({
     }
   };
 
-  /* AUTH LISTENER */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setLoading(false); 
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -76,7 +73,7 @@ export function UserAuthContextProvider({
     <AuthContext.Provider
       value={{
         user,
-        loading, 
+        loading,
         signInWithGoogle,
         signOutUser,
       }}
@@ -94,3 +91,30 @@ export function useUserAuth() {
   }
   return context;
 }
+
+/* ================= MAIN CONTENT UI ================= */
+function MainContent() {
+  const { user, loading, signInWithGoogle, signOutUser } = useUserAuth();
+
+  if (loading) {
+    return <p style={{ color: "white" }}>Loading...</p>;
+  }
+
+  return (
+    <div style={{ color: "white", padding: "20px" }}>
+      {user ? (
+        <>
+          <p>Welcome, {user.displayName}</p>
+          <button onClick={signOutUser}>Logout</button>
+        </>
+      ) : (
+        <>
+          <p>You are not logged in</p>
+          <button onClick={signInWithGoogle}>Login with Google</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default MainContent;

@@ -8,10 +8,11 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import { db } from "../../Auth/firebase";
-import { useUserAuth } from "../../Auth/auth-context";
+import { db } from "../../../Auth/firebase";
+import { useUserAuth } from "../../../Auth/auth-context";
 import { useParams } from "next/navigation";
 
+/* ================= TYPES ================= */
 type Comment = {
   id: string;
   text: string;
@@ -21,13 +22,13 @@ type Comment = {
 };
 
 export default function CommentPage() {
-  const { id } = useParams();
   const { user, profile } = useUserAuth();
+  const { id } = useParams();
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
 
-  /*  REALTIME */
+  /* 🔥 REALTIME COMMENTS */
   useEffect(() => {
     const q = query(
       collection(db, "posts", id as string, "comments"),
@@ -45,7 +46,7 @@ export default function CommentPage() {
     return () => unsub();
   }, [id]);
 
-  /*  ADD COMMENT */
+  /* 🔥 ADD COMMENT */
   const addComment = async () => {
     if (!text || !user || !profile) return;
 
@@ -64,16 +65,20 @@ export default function CommentPage() {
     <div style={{ padding: "40px", color: "white" }}>
       <h2>💬 Comments</h2>
 
-      <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Write comment..."
-      />
-      <button onClick={addComment}>Post</button>
+      {/* ADD COMMENT */}
+      <div>
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Write a comment..."
+        />
+        <button onClick={addComment}>Post</button>
+      </div>
 
+      {/* LIST */}
       {comments.map((c) => (
         <div key={c.id} style={{ marginTop: "15px" }}>
-          <img src={c.photoURL} width={30} style={{ borderRadius: "50%" }} />
+          <img src={c.photoURL} width={30} />
           <b>{c.username}</b>
           <p>{c.text}</p>
         </div>

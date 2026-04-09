@@ -11,6 +11,7 @@ import {
   query,
 } from "firebase/firestore";
 import { db } from "../Auth/firebase";
+import { useUserAuth } from "../Auth/auth-context"; // ✅ NEW
 
 /* ================= THEME ================= */
 const theme = {
@@ -29,11 +30,16 @@ type Post = {
   title: string;
   content: string;
   likes: number;
+  dislikes: number; 
+  username: string; 
+  photoURL: string; 
   createdAt: number;
 };
 
 /* ================= MAIN COMPONENT ================= */
 export function DiscussionBoard() {
+  const { user, profile } = useUserAuth(); // ✅ NEW
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -42,27 +48,38 @@ export function DiscussionBoard() {
   /* ================= REAL-TIME FETCH ================= */
   useEffect(() => {
     const q = query(collection(db, "posts"));
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data: Post[] = snapshot.docs.map((docItem) => ({
         id: docItem.id,
         ...(docItem.data() as Omit<Post, "id">),
       }));
+
       const sorted = data.sort(
-        (a, b) => b.likes - a.likes || b.createdAt - a.createdAt
+        (a, b) =>
+          (b.likes - (b.dislikes || 0)) -
+          (a.likes - (a.dislikes || 0)) ||
+          b.createdAt - a.createdAt
       );
+
       setPosts(sorted);
     });
+
     return () => unsubscribe();
   }, []);
 
-  /* ================= CREATE POST ================= */
+  /* ================= CREATE POST (UPDATED 🔥) ================= */
   const createPost = async () => {
-    if (!title || !content) return;
+    if (!title || !content || !user || !profile) return;
 
     await addDoc(collection(db, "posts"), {
       title,
       content,
       likes: 0,
+      dislikes: 0, // ✅ NEW
+      userId: user.uid,
+      username: profile.username, // ✅ NEW
+      photoURL: profile.photoURL, // ✅ NEW
       createdAt: Date.now(),
     });
 
@@ -71,10 +88,13 @@ export function DiscussionBoard() {
     setShowCreate(false);
   };
 
-  /* ================= LIKE ================= */
-  const likePost = async (id: string) => {
+  /* ================= VOTING ================= */
+  const votePost = async (id: string, type: "like" | "dislike") => {
     const postRef = doc(db, "posts", id);
-    await updateDoc(postRef, { likes: increment(1) });
+
+    await updateDoc(postRef, {
+      [type === "like" ? "likes" : "dislikes"]: increment(1),
+    });
   };
 
   return (
@@ -97,18 +117,21 @@ export function DiscussionBoard() {
       {showCreate && (
         <div style={createBoxStyle}>
           <h3 style={{ color: theme.textDim }}>Post a New Discussion</h3>
+
           <input
             placeholder="Thread Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             style={inputStyle}
           />
+
           <textarea
             placeholder="What's on your mind?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             style={{ ...inputStyle, minHeight: "100px" }}
           />
+
           <button onClick={createPost} style={actionButtonStyle}>
             POST THREAD
           </button>
@@ -118,7 +141,7 @@ export function DiscussionBoard() {
       {/* POSTS */}
       <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
         {posts.map((post) => (
-          <PostCard key={post.id} post={post} likePost={likePost} />
+          <PostCard key={post.id} post={post} votePost={votePost} />
         ))}
       </div>
     </div>
@@ -128,10 +151,10 @@ export function DiscussionBoard() {
 /* ================= POST CARD ================= */
 function PostCard({
   post,
-  likePost,
+  votePost,
 }: {
   post: Post;
-  likePost: (id: string) => void;
+  votePost: (id: string, type: "like" | "dislike") => void;
 }) {
   const [hover, setHover] = useState(false);
 
@@ -145,25 +168,45 @@ function PostCard({
       }}
     >
       <div style={{ flex: 1 }}>
+        {/* ✅ USER INFO */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+          <img
+            src={post.photoURL}
+            width={35}
+            height={35}
+            style={{ borderRadius: "50%" }}
+          />
+          <span style={{ fontSize: "0.85rem", color: theme.textDim }}>
+            {post.username}
+          </span>
+        </div>
+
         <h2 style={titleStyle}>{post.title}</h2>
         <p style={contentStyle}>{post.content}</p>
+
         <div style={dateStyle}>
           Posted {new Date(post.createdAt).toLocaleString()}
         </div>
       </div>
 
+      {/* RIGHT PANEL */}
       <div style={rightPanel}>
-        <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>{post.likes}</div>
-        <div style={{ fontSize: "0.7rem", color: theme.textDim }}>LIKES</div>
+        <div style={{ fontSize: "1.1rem" }}>
+          👍 {post.likes} | 👎 {post.dislikes || 0}
+        </div>
+
         <button
-          onClick={() => likePost(post.id)}
-          style={{
-            ...likeButtonStyle,
-            borderColor: hover ? "#ff3f5c" : theme.primaryRed,
-            color: hover ? "#ff3f5c" : theme.primaryRed,
-          }}
+          onClick={() => votePost(post.id, "like")}
+          style={likeButtonStyle}
         >
-          👍 LIKE
+          👍
+        </button>
+
+        <button
+          onClick={() => votePost(post.id, "dislike")}
+          style={dislikeButtonStyle}
+        >
+          👎
         </button>
       </div>
     </div>
@@ -171,12 +214,12 @@ function PostCard({
 }
 
 /* ================= STYLES ================= */
+
 const pageStyle: CSSProperties = {
   backgroundColor: theme.background,
   minHeight: "100vh",
   padding: "40px",
   color: theme.textMain,
-  fontFamily: "sans-serif",
 };
 
 const headerStyle: CSSProperties = {
@@ -193,7 +236,6 @@ const toggleButtonStyle: CSSProperties = {
   padding: "10px 16px",
   borderRadius: "6px",
   cursor: "pointer",
-  fontWeight: "bold",
 };
 
 const createBoxStyle: CSSProperties = {
@@ -229,23 +271,43 @@ const postCardStyle: CSSProperties = {
   padding: "20px",
   border: `1px solid ${theme.border}`,
   borderRadius: "6px",
-  transition: "0.2s",
 };
 
-const titleStyle: CSSProperties = { color: theme.primaryRed, marginBottom: "10px" };
-const contentStyle: CSSProperties = { color: "#ccc", marginBottom: "10px" };
-const dateStyle: CSSProperties = { fontSize: "0.8rem", color: theme.textDim };
+const titleStyle: CSSProperties = {
+  color: theme.primaryRed,
+  marginBottom: "10px",
+};
+
+const contentStyle: CSSProperties = {
+  color: "#ccc",
+};
+
+const dateStyle: CSSProperties = {
+  fontSize: "0.8rem",
+  color: theme.textDim,
+};
+
 const rightPanel: CSSProperties = {
   textAlign: "center",
   borderLeft: `1px solid ${theme.border}`,
   paddingLeft: "20px",
   marginLeft: "20px",
-  minWidth: "80px",
 };
+
 const likeButtonStyle: CSSProperties = {
   marginTop: "10px",
   background: "transparent",
-  border: `1px solid ${theme.primaryRed}`,
+  border: "1px solid #22c55e",
+  color: "#22c55e",
+  padding: "5px 10px",
+  cursor: "pointer",
+};
+
+const dislikeButtonStyle: CSSProperties = {
+  marginTop: "5px",
+  background: "transparent",
+  border: "1px solid #ef4444",
+  color: "#ef4444",
   padding: "5px 10px",
   cursor: "pointer",
 };
