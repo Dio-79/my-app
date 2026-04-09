@@ -7,6 +7,7 @@ import type { ReactNode, CSSProperties } from "react";
 import { UserAuthContextProvider } from "../../Auth/auth-context";
 import { Home } from "../Home";
 import { WhatNewDropdown } from "../LatestUpdate/WhatNewDropdown";
+import { MemberDropdown } from "../MemberContent/MemberDropdown";
 
 /* ================= THEME ================= */
 export const theme = {
@@ -37,29 +38,17 @@ export const theme = {
   },
 };
 
-/* ================= ROUTES ================= */
-const MemberRoutes = {
-  New: "/project/member/new",
-  Trending: "/project/member/trending",
-  Search: "/project/member/search",
-  Trophies: "/project/member/trophies",
-} as const;
-
-type Route = (typeof MemberRoutes)[keyof typeof MemberRoutes];
-
 /* ================= LAYOUT ================= */
 export default function MemberContentLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   const handleNavigate = useCallback(
-    (path: Route) => {
-      setOpen(false);
+    (path: string) => {
       router.push(path);
     },
     [router]
@@ -79,50 +68,7 @@ export default function MemberContentLayout({
           <div style={navLinksStyle}>
             <Home />
             <WhatNewDropdown />
-
-            {/* EXPLORE DROPDOWN */}
-            <div style={{ position: "relative" }}>
-              <button
-                aria-expanded={open}
-                onClick={() => setOpen((prev) => !prev)}
-                style={triggerButtonStyle}
-              >
-                EXPLORE FEED
-                <span style={arrowStyle(open)}>▼</span>
-              </button>
-
-              {open && (
-                <>
-                  <div onClick={() => setOpen(false)} style={backdropStyle} />
-
-                  <div style={dropdownContainerStyle}>
-                    <DropdownItem
-                      label="🆕 New Posts"
-                      active={pathname === MemberRoutes.New}
-                      onClick={() => handleNavigate(MemberRoutes.New)}
-                    />
-                    <DropdownItem
-                      label="🔥 Trending"
-                      active={pathname === MemberRoutes.Trending}
-                      onClick={() => handleNavigate(MemberRoutes.Trending)}
-                    />
-                    <DropdownItem
-                      label="🔍 Search"
-                      active={pathname === MemberRoutes.Search}
-                      onClick={() => handleNavigate(MemberRoutes.Search)}
-                    />
-
-                    <div style={dividerStyle} />
-
-                    <DropdownItem
-                      label="🏆 Trophies"
-                      active={pathname === MemberRoutes.Trophies}
-                      onClick={() => handleNavigate(MemberRoutes.Trophies)}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            <MemberDropdown /> 
           </div>
         </nav>
 
@@ -130,43 +76,6 @@ export default function MemberContentLayout({
         <main style={mainStyle}>{children}</main>
       </div>
     </UserAuthContextProvider>
-  );
-}
-
-/* ================= DROPDOWN ITEM ================= */
-function DropdownItem({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        padding: `12px ${theme.spacing.md}`,
-        cursor: "pointer",
-        color: active || hovered ? theme.colors.primary : theme.colors.textMain,
-        backgroundColor: hovered ? theme.colors.inputBg : "transparent",
-        fontSize: "0.85rem",
-        borderLeft: active
-          ? `3px solid ${theme.colors.primary}`
-          : "3px solid transparent",
-        transition: "all 0.2s ease",
-        fontWeight: "bold",
-      }}
-    >
-      {label}
-    </div>
   );
 }
 
@@ -201,54 +110,6 @@ const navLinksStyle: CSSProperties = {
   display: "flex",
   gap: "20px",
   alignItems: "center",
-};
-
-const triggerButtonStyle: CSSProperties = {
-  background: "none",
-  border: "none",
-  color: "white",
-  padding: "10px 5px",
-  cursor: "pointer",
-  fontWeight: "bold",
-  fontSize: "0.85rem",
-  textTransform: "uppercase",
-  display: "flex",
-  alignItems: "center",
-  gap: "6px",
-};
-
-const arrowStyle = (open: boolean): CSSProperties => ({
-  fontSize: "0.6rem",
-  color: theme.colors.textDim,
-  transform: open ? "rotate(180deg)" : "rotate(0deg)",
-  transition: "transform 0.2s ease",
-});
-
-const dropdownContainerStyle: CSSProperties = {
-  position: "absolute",
-  top: "45px",
-  left: "50%",
-  transform: "translateX(-50%)",
-  width: "200px",
-  backgroundColor: theme.colors.dropdownBg,
-  border: `1px solid ${theme.colors.border}`,
-  borderTop: `2px solid ${theme.colors.primary}`,
-  borderRadius: theme.borderRadius.sm,
-  zIndex: 100,
-  boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-  padding: `${theme.spacing.sm} 0`,
-};
-
-const backdropStyle: CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  zIndex: 90,
-};
-
-const dividerStyle: CSSProperties = {
-  height: "1px",
-  backgroundColor: theme.colors.border,
-  margin: "5px 0",
 };
 
 const mainStyle: CSSProperties = {

@@ -19,8 +19,12 @@ export function Home() {
 
   const handleRefreshHome = () => {
     setOpen(false);
-    // window.location.href forces a full refresh to reset the services list/search
-    window.location.href = "/"; 
+
+    // ✅ Route to your JoystickJunkies main page
+    router.push("/Project");
+
+    // ✅ Optional: refresh data without full reload
+    router.refresh();
   };
 
   return (
@@ -42,7 +46,10 @@ export function Home() {
           textTransform: "uppercase"
         }}
       >
-        HOME <span style={{ fontSize: "0.6rem", color: theme.textDim }}>▼</span>
+        HOME{" "}
+        <span style={{ fontSize: "0.6rem", color: theme.textDim }}>
+          ▼
+        </span>
       </button>
 
       {/* Dropdown Menu */}
@@ -69,7 +76,10 @@ export function Home() {
               boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
             }}
           >
-            <HomeItem label="Go to Home Page" onClick={handleRefreshHome} />
+            <HomeItem 
+              label="Go to Home Page" 
+              onClick={handleRefreshHome} 
+            />
           </div>
         </>
       )}
@@ -77,8 +87,14 @@ export function Home() {
   );
 }
 
-/* Helper Component for Hover Effect */
-function HomeItem({ label, onClick }: { label: string; onClick: () => void }) {
+/* ================= ITEM COMPONENT ================= */
+function HomeItem({ 
+  label, 
+  onClick 
+}: { 
+  label: string; 
+  onClick: () => void; 
+}) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (

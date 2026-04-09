@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../../../Auth/firebase";
-import {} from "../../../DiscussionBoard/page";
+import { DiscussionBoard } from "@/app/Project/DiscussionBoard/page";
 
 type Post = {
   id: string;
@@ -58,7 +58,7 @@ export default function NewPostsPage() {
         <div key={post.id} style={cardStyle}>
           <h3 style={{ color: THEME.primaryRed }}>{post.title}</h3>
           <p>{post.content}</p>
-
+           <DiscussionBoard/>
 
         </div>
       ))}
