@@ -13,7 +13,7 @@ interface Comment {
   text: string;
 }
 
-export default function PostPage({ params }: PostPageProps) {
+export  function PostPage({ params }: PostPageProps) {
 
 
   const [comments, setComments] = useState<Comment[]>([]);

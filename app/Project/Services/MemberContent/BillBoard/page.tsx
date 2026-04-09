@@ -1,7 +1,7 @@
 "use client";
 
 import { CSSProperties } from "react";
-
+import { DiscussionBoard } from "@/app/Project/DiscussionBoard/page";
 /* ================= THEME ================= */
 const theme = {
   background: "#1a1a1a",
@@ -31,6 +31,7 @@ export default function BillboardPage() {
           <div key={i} style={cardStyle}>
             <div style={accentStyle} />
             <span>{post}</span>
+            <BillboardPage/>
           </div>
         ))}
       </div>

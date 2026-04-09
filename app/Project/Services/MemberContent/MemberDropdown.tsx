@@ -12,7 +12,7 @@ type RouteKey =
 const MemberRoutes: Record<RouteKey, string> = {
   MemberList: "/Project/Services/MemberContent/MemberList",
   CurrentVisitor: "/Project/Services/MemberContent/CurrentVisitor",
-  Billboard: "/Project/Services/MemberContent/Billboard",
+  Billboard: "/Project/Services/MemberContent/billboard",
   Trophies: "/Project/Services/MemberContent/Trophies",
 };
 

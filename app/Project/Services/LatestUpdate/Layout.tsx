@@ -1,17 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import type { ReactNode, CSSProperties } from "react";
+
+import { UserAuthContextProvider } from "../../Auth/auth-context";
+import { Home } from "../Home";
+import { WhatNewDropdown } from "../LatestUpdate/WhatNewDropdown";
 
 /* ================= THEME ================= */
-const THEME = {
-  background: "#1a1a1a",
-  dropdownBg: "#222222",
-  primaryRed: "#e11d48",
-  border: "#333",
-  textMain: "#ffffff",
-  textDim: "#a0a0a0",
-  hover: "#2a2a2a",
+export const theme = {
+  colors: {
+    background: "#1a1a1a",
+    navBg: "#121212",
+    primary: "#e11d48",
+    border: "#333",
+    textMain: "#ffffff",
+    textDim: "#a0a0a0",
+    cardBg: "#1e1e1e",
+    inputBg: "#2a2a2a",
+    dropdownBg: "#222222",
+  },
+  spacing: {
+    sm: "8px",
+    md: "16px",
+    lg: "24px",
+    xl: "40px",
+  },
+  borderRadius: {
+    sm: "3px",
+    md: "4px",
+    lg: "8px",
+  },
+  font: {
+    main: "sans-serif",
+  },
 };
 
 /* ================= ROUTES ================= */
@@ -20,77 +43,93 @@ const MemberRoutes = {
   Trending: "/project/member/trending",
   Search: "/project/member/search",
   Trophies: "/project/member/trophies",
-};
+} as const;
+
+type Route = (typeof MemberRoutes)[keyof typeof MemberRoutes];
 
 /* ================= LAYOUT ================= */
-export default function MemberLayout({
+export default function MemberContentLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleNavigate = (path: string) => {
-    setOpen(false);
-    router.push(path);
-  };
+  const handleNavigate = useCallback(
+    (path: Route) => {
+      setOpen(false);
+      router.push(path);
+    },
+    [router]
+  );
 
   return (
-    <div style={{ backgroundColor: THEME.background, minHeight: "100vh" }}>
-      {/* NAVBAR */}
-      <nav style={navBarStyle}>
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => setOpen(!open)}
-            style={triggerButtonStyle}
-          >
-            EXPLORE FEED{" "}
-            <span style={{ fontSize: "0.6rem" }}>
-              {open ? "▲" : "▼"}
-            </span>
-          </button>
+    <UserAuthContextProvider>
+      <div style={containerStyle}>
+        {/* NAVBAR */}
+        <nav style={navBarStyle}>
+          {/* LOGO */}
+          <div style={logoStyle}>
+            JOYSTICK<span style={{ color: "white" }}>JUNKIES</span>
+          </div>
 
-          {open && (
-            <>
-              {/* BACKDROP */}
-              <div onClick={() => setOpen(false)} style={backdropStyle} />
+          {/* NAV LINKS */}
+          <div style={navLinksStyle}>
+            <Home />
+            <WhatNewDropdown />
 
-              {/* DROPDOWN */}
-              <div style={dropdownContainerStyle}>
-                <DropdownItem
-                  label="🆕 New Posts"
-                  active={pathname === MemberRoutes.New}
-                  onClick={() => handleNavigate(MemberRoutes.New)}
-                />
-                <DropdownItem
-                  label="🔥 Trending"
-                  active={pathname === MemberRoutes.Trending}
-                  onClick={() => handleNavigate(MemberRoutes.Trending)}
-                />
-                <DropdownItem
-                  label="🔍 Search"
-                  active={pathname === MemberRoutes.Search}
-                  onClick={() => handleNavigate(MemberRoutes.Search)}
-                />
+            {/* EXPLORE DROPDOWN */}
+            <div style={{ position: "relative" }}>
+              <button
+                aria-expanded={open}
+                onClick={() => setOpen((prev) => !prev)}
+                style={triggerButtonStyle}
+              >
+                EXPLORE FEED
+                <span style={arrowStyle(open)}>▼</span>
+              </button>
 
-                <div style={dividerStyle} />
+              {open && (
+                <>
+                  <div onClick={() => setOpen(false)} style={backdropStyle} />
 
-                <DropdownItem
-                  label="🏆 Trophies"
-                  active={pathname === MemberRoutes.Trophies}
-                  onClick={() => handleNavigate(MemberRoutes.Trophies)}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      </nav>
+                  <div style={dropdownContainerStyle}>
+                    <DropdownItem
+                      label="🆕 New Posts"
+                      active={pathname === MemberRoutes.New}
+                      onClick={() => handleNavigate(MemberRoutes.New)}
+                    />
+                    <DropdownItem
+                      label="🔥 Trending"
+                      active={pathname === MemberRoutes.Trending}
+                      onClick={() => handleNavigate(MemberRoutes.Trending)}
+                    />
+                    <DropdownItem
+                      label="🔍 Search"
+                      active={pathname === MemberRoutes.Search}
+                      onClick={() => handleNavigate(MemberRoutes.Search)}
+                    />
 
-      {/* PAGE CONTENT */}
-      <main style={mainStyle}>{children}</main>
-    </div>
+                    <div style={dividerStyle} />
+
+                    <DropdownItem
+                      label="🏆 Trophies"
+                      active={pathname === MemberRoutes.Trophies}
+                      onClick={() => handleNavigate(MemberRoutes.Trophies)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </nav>
+
+        {/* CONTENT */}
+        <main style={mainStyle}>{children}</main>
+      </div>
+    </UserAuthContextProvider>
   );
 }
 
@@ -104,19 +143,26 @@ function DropdownItem({
   active: boolean;
   onClick: () => void;
 }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        padding: "12px 18px",
+        padding: `12px ${theme.spacing.md}`,
         cursor: "pointer",
-        color: active ? THEME.primaryRed : THEME.textMain,
-        backgroundColor: "transparent",
+        color: active || hovered ? theme.colors.primary : theme.colors.textMain,
+        backgroundColor: hovered ? theme.colors.inputBg : "transparent",
         fontSize: "0.85rem",
         borderLeft: active
-          ? `3px solid ${THEME.primaryRed}`
+          ? `3px solid ${theme.colors.primary}`
           : "3px solid transparent",
-        transition: "0.2s",
+        transition: "all 0.2s ease",
+        fontWeight: "bold",
       }}
     >
       {label}
@@ -126,50 +172,87 @@ function DropdownItem({
 
 /* ================= STYLES ================= */
 
-const navBarStyle: React.CSSProperties = {
-  padding: "15px 20px",
-  borderBottom: `1px solid ${THEME.border}`,
-  display: "flex",
-  justifyContent: "center",
+const containerStyle: CSSProperties = {
+  backgroundColor: theme.colors.background,
+  minHeight: "100vh",
+  fontFamily: theme.font.main,
 };
 
-const triggerButtonStyle: React.CSSProperties = {
+const navBarStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  padding: "0 2rem",
+  height: "70px",
+  backgroundColor: theme.colors.navBg,
+  borderBottom: `2px solid ${theme.colors.primary}`,
+  color: "white",
+  justifyContent: "space-between",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+};
+
+const logoStyle: CSSProperties = {
+  fontSize: "1.5rem",
+  letterSpacing: "-1px",
+  color: theme.colors.primary,
+  fontWeight: "bold",
+};
+
+const navLinksStyle: CSSProperties = {
+  display: "flex",
+  gap: "20px",
+  alignItems: "center",
+};
+
+const triggerButtonStyle: CSSProperties = {
   background: "none",
-  border: `1px solid ${THEME.border}`,
-  color: THEME.textMain,
-  padding: "8px 16px",
-  borderRadius: "4px",
+  border: "none",
+  color: "white",
+  padding: "10px 5px",
   cursor: "pointer",
   fontWeight: "bold",
-  fontSize: "0.75rem",
-  letterSpacing: "1px",
+  fontSize: "0.85rem",
+  textTransform: "uppercase",
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
 };
 
-const dropdownContainerStyle: React.CSSProperties = {
+const arrowStyle = (open: boolean): CSSProperties => ({
+  fontSize: "0.6rem",
+  color: theme.colors.textDim,
+  transform: open ? "rotate(180deg)" : "rotate(0deg)",
+  transition: "transform 0.2s ease",
+});
+
+const dropdownContainerStyle: CSSProperties = {
   position: "absolute",
-  top: "40px",
+  top: "45px",
   left: "50%",
   transform: "translateX(-50%)",
   width: "200px",
-  backgroundColor: THEME.dropdownBg,
-  border: `1px solid ${THEME.border}`,
+  backgroundColor: theme.colors.dropdownBg,
+  border: `1px solid ${theme.colors.border}`,
+  borderTop: `2px solid ${theme.colors.primary}`,
+  borderRadius: theme.borderRadius.sm,
   zIndex: 100,
   boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+  padding: `${theme.spacing.sm} 0`,
 };
 
-const backdropStyle: React.CSSProperties = {
+const backdropStyle: CSSProperties = {
   position: "fixed",
   inset: 0,
   zIndex: 90,
 };
 
-const dividerStyle: React.CSSProperties = {
+const dividerStyle: CSSProperties = {
   height: "1px",
-  backgroundColor: THEME.border,
+  backgroundColor: theme.colors.border,
   margin: "5px 0",
 };
 
-const mainStyle: React.CSSProperties = {
+const mainStyle: CSSProperties = {
   maxWidth: "800px",
   margin: "0 auto",
+  padding: theme.spacing.xl,
 };
