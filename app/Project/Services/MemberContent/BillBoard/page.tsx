@@ -1,7 +1,8 @@
 "use client";
 
-import { CSSProperties } from "react";
+import { CSSProperties, useState } from "react";
 import { DiscussionBoard } from "@/app/Project/DiscussionBoard/page";
+
 /* ================= THEME ================= */
 const theme = {
   background: "#1a1a1a",
@@ -20,18 +21,35 @@ const posts = [
 
 /* ================= PAGE ================= */
 export default function BillboardPage() {
+  const [showDiscussion, setShowDiscussion] = useState(false);
+
   return (
     <div style={pageStyle}>
       <h1 style={titleStyle}>
         COMMUNITY <span style={{ color: "white" }}>BILLBOARD</span>
       </h1>
 
+      {/* RED BUTTON TO OPEN DISCUSSION BOARD */}
+      <button
+        style={discussionButtonStyle}
+        onClick={() => setShowDiscussion(!showDiscussion)}
+      >
+        {showDiscussion ? "✖ Close Discussion Board" : "➕ Open Discussion Board"}
+      </button>
+
+      {/* DISCUSSION BOARD (TOGGLE) */}
+      {showDiscussion && (
+        <div style={{ marginTop: "20px" }}>
+          <DiscussionBoard />
+        </div>
+      )}
+
+      {/* BILLBOARD POSTS */}
       <div style={listStyle}>
         {posts.map((post, i) => (
           <div key={i} style={cardStyle}>
             <div style={accentStyle} />
             <span>{post}</span>
-            <BillboardPage/>
           </div>
         ))}
       </div>
@@ -56,6 +74,17 @@ const titleStyle: CSSProperties = {
   paddingBottom: "15px",
   marginBottom: "30px",
   textTransform: "uppercase",
+};
+
+const discussionButtonStyle: CSSProperties = {
+  backgroundColor: theme.primaryRed,
+  color: "white",
+  border: "none",
+  padding: "10px 20px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontWeight: "bold",
+  marginBottom: "20px",
 };
 
 const listStyle: CSSProperties = {

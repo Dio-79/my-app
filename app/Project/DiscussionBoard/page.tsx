@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, CSSProperties } from "react";
 import {
   collection,
   addDoc,
@@ -11,7 +11,6 @@ import {
   query,
 } from "firebase/firestore";
 import { db } from "../Auth/firebase";
-import { useRouter } from "next/navigation";
 
 /* ================= THEME ================= */
 const theme = {
@@ -24,6 +23,7 @@ const theme = {
   textDim: "#a0a0a0",
 };
 
+/* ================= TYPES ================= */
 type Post = {
   id: string;
   title: string;
@@ -32,29 +32,26 @@ type Post = {
   createdAt: number;
 };
 
+/* ================= MAIN COMPONENT ================= */
 export function DiscussionBoard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [showCreate, setShowCreate] = useState(false); 
+  const [showCreate, setShowCreate] = useState(false);
 
   /* ================= REAL-TIME FETCH ================= */
   useEffect(() => {
     const q = query(collection(db, "posts"));
-
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data: Post[] = snapshot.docs.map((docItem) => ({
         id: docItem.id,
         ...(docItem.data() as Omit<Post, "id">),
       }));
-
       const sorted = data.sort(
         (a, b) => b.likes - a.likes || b.createdAt - a.createdAt
       );
-
       setPosts(sorted);
     });
-
     return () => unsubscribe();
   }, []);
 
@@ -71,6 +68,7 @@ export function DiscussionBoard() {
 
     setTitle("");
     setContent("");
+    setShowCreate(false);
   };
 
   /* ================= LIKE ================= */
@@ -81,59 +79,47 @@ export function DiscussionBoard() {
 
   return (
     <div style={pageStyle}>
-      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        {/* HEADER */}
-        <h1 style={headerStyle}>
-          <span style={{ color: theme.primaryRed }}>🔥</span> COMMUNITY DISCUSSIONS
-        </h1>
+      <h1 style={headerStyle}>
+        <span style={{ color: theme.primaryRed }}>🔥</span> COMMUNITY DISCUSSIONS
+      </h1>
 
-        {/* TOGGLE BUTTON */}
-        <div style={{ marginBottom: "20px" }}>
-          <button
-            onClick={() => setShowCreate(!showCreate)}
-            style={toggleButtonStyle}
-          >
-            {showCreate ? "✖ CANCEL" : "➕ NEW DISCUSSION"}
+      {/* TOGGLE BUTTON */}
+      <div style={{ marginBottom: "20px" }}>
+        <button
+          onClick={() => setShowCreate(!showCreate)}
+          style={toggleButtonStyle}
+        >
+          {showCreate ? "✖ Cancel" : "➕ New Discussion"}
+        </button>
+      </div>
+
+      {/* CREATE POST */}
+      {showCreate && (
+        <div style={createBoxStyle}>
+          <h3 style={{ color: theme.textDim }}>Post a New Discussion</h3>
+          <input
+            placeholder="Thread Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={inputStyle}
+          />
+          <textarea
+            placeholder="What's on your mind?"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            style={{ ...inputStyle, minHeight: "100px" }}
+          />
+          <button onClick={createPost} style={actionButtonStyle}>
+            POST THREAD
           </button>
         </div>
+      )}
 
-        {/* ✅ CREATE POST (TOGGLED) */}
-        {showCreate && (
-          <div style={createBoxStyle}>
-            <h3 style={{ color: theme.textDim }}>POST A NEW TOPIC</h3>
-
-            <input
-              placeholder="Thread Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={inputStyle}
-            />
-
-            <textarea
-              placeholder="What's on your mind?"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              style={{ ...inputStyle, minHeight: "100px" }}
-            />
-
-            <button
-              onClick={async () => {
-                await createPost();
-                setShowCreate(false); // auto close
-              }}
-              style={actionButtonStyle}
-            >
-              POST THREAD
-            </button>
-          </div>
-        )}
-
-        {/* POSTS */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} likePost={likePost} />
-          ))}
-        </div>
+      {/* POSTS */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+        {posts.map((post) => (
+          <PostCard key={post.id} post={post} likePost={likePost} />
+        ))}
       </div>
     </div>
   );
@@ -148,7 +134,6 @@ function PostCard({
   likePost: (id: string) => void;
 }) {
   const [hover, setHover] = useState(false);
-  const router = useRouter();
 
   return (
     <div
@@ -159,35 +144,17 @@ function PostCard({
         backgroundColor: hover ? "#2a2a2a" : theme.cardBg,
       }}
     >
-      {/* LEFT */}
       <div style={{ flex: 1 }}>
         <h2 style={titleStyle}>{post.title}</h2>
-
         <p style={contentStyle}>{post.content}</p>
-
         <div style={dateStyle}>
           Posted {new Date(post.createdAt).toLocaleString()}
         </div>
-
-        <button
-          onClick={() =>
-            router.push(`/Project/DiscussionBoard/Comment/${post.id}`)
-          }
-          style={commentBtn}
-        >
-          💬 VIEW COMMENTS
-        </button>
       </div>
 
-      {/* RIGHT */}
       <div style={rightPanel}>
-        <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
-          {post.likes}
-        </div>
-        <div style={{ fontSize: "0.7rem", color: theme.textDim }}>
-          LIKES
-        </div>
-
+        <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>{post.likes}</div>
+        <div style={{ fontSize: "0.7rem", color: theme.textDim }}>LIKES</div>
         <button
           onClick={() => likePost(post.id)}
           style={{
@@ -204,22 +171,22 @@ function PostCard({
 }
 
 /* ================= STYLES ================= */
-
-const pageStyle = {
+const pageStyle: CSSProperties = {
   backgroundColor: theme.background,
   minHeight: "100vh",
-  padding: "40px 20px",
+  padding: "40px",
   color: theme.textMain,
+  fontFamily: "sans-serif",
 };
 
-const headerStyle = {
+const headerStyle: CSSProperties = {
   fontSize: "1.8rem",
   borderBottom: `2px solid ${theme.primaryRed}`,
   paddingBottom: "10px",
   marginBottom: "30px",
 };
 
-const toggleButtonStyle = {
+const toggleButtonStyle: CSSProperties = {
   backgroundColor: theme.primaryRed,
   color: "white",
   border: "none",
@@ -229,7 +196,7 @@ const toggleButtonStyle = {
   fontWeight: "bold",
 };
 
-const createBoxStyle = {
+const createBoxStyle: CSSProperties = {
   backgroundColor: theme.cardBg,
   padding: "20px",
   borderRadius: "6px",
@@ -237,7 +204,7 @@ const createBoxStyle = {
   marginBottom: "40px",
 };
 
-const inputStyle = {
+const inputStyle: CSSProperties = {
   width: "100%",
   padding: "12px",
   marginBottom: "10px",
@@ -247,7 +214,7 @@ const inputStyle = {
   borderRadius: "6px",
 };
 
-const actionButtonStyle = {
+const actionButtonStyle: CSSProperties = {
   backgroundColor: theme.primaryRed,
   color: "white",
   border: "none",
@@ -256,7 +223,7 @@ const actionButtonStyle = {
   cursor: "pointer",
 };
 
-const postCardStyle = {
+const postCardStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   padding: "20px",
@@ -265,42 +232,20 @@ const postCardStyle = {
   transition: "0.2s",
 };
 
-const titleStyle = {
-  color: theme.primaryRed,
-  marginBottom: "10px",
-};
-
-const contentStyle = {
-  color: "#ccc",
-  marginBottom: "10px",
-};
-
-const dateStyle = {
-  fontSize: "0.8rem",
-  color: theme.textDim,
-};
-
-const rightPanel = {
-  textAlign: "center" as const,
+const titleStyle: CSSProperties = { color: theme.primaryRed, marginBottom: "10px" };
+const contentStyle: CSSProperties = { color: "#ccc", marginBottom: "10px" };
+const dateStyle: CSSProperties = { fontSize: "0.8rem", color: theme.textDim };
+const rightPanel: CSSProperties = {
+  textAlign: "center",
   borderLeft: `1px solid ${theme.border}`,
   paddingLeft: "20px",
   marginLeft: "20px",
   minWidth: "80px",
 };
-
-const likeButtonStyle = {
+const likeButtonStyle: CSSProperties = {
   marginTop: "10px",
   background: "transparent",
   border: `1px solid ${theme.primaryRed}`,
   padding: "5px 10px",
   cursor: "pointer",
-};
-
-const commentBtn = {
-  marginTop: "10px",
-  background: "none",
-  border: "none",
-  color: "#aaa",
-  cursor: "pointer",
-  fontSize: "0.8rem",
 };
