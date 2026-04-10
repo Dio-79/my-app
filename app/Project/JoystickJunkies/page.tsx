@@ -10,6 +10,7 @@ import { Home } from "../Services/Home";
 import service from "../Services/Service.json";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { DiscussionBoard } from "../DiscussionBoard/page";
 
 /* ================= THEME ================= */
 const theme = {

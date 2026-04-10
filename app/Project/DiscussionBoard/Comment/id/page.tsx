@@ -16,7 +16,7 @@ interface Comment {
   };
 }
 
-export default function PostComments({ params }: { params: { id: string } }) {
+export  function PostComments({ params }: { params: { id: string } }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
 
