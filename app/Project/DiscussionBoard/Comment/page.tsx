@@ -1,83 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../../Auth/firebase";
-import { useUserAuth } from "../../Auth/auth-context";
-import { useParams } from "next/navigation";
-
-type Comment = {
-  id: string;
-  text: string;
-  username: string;
-  photoURL: string;
-  createdAt: number;
-};
+import Image from "next/image";
 
 export default function CommentPage() {
-  const { id } = useParams();
-  const { user, profile } = useUserAuth();
-
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [text, setText] = useState("");
-
-  /*  REALTIME */
-  useEffect(() => {
-    const q = query(
-      collection(db, "posts", id as string, "comments"),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsub = onSnapshot(q, (snap) => {
-      const data: Comment[] = snap.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Comment, "id">),
-      }));
-      setComments(data);
-    });
-
-    return () => unsub();
-  }, [id]);
-
-  /*  ADD COMMENT */
-  const addComment = async () => {
-    if (!text || !user || !profile) return;
-
-    await addDoc(collection(db, "posts", id as string, "comments"), {
-      text,
-      userId: user.uid,
-      username: profile.username,
-      photoURL: profile.photoURL,
-      createdAt: Date.now(),
-    });
-
-    setText("");
-  };
-
   return (
-    <div style={{ padding: "40px", color: "white" }}>
-      <h2>💬 Comments</h2>
+    <div style={{ padding: "40px", background: "#1a1a1a", minHeight: "100vh", color: "white" }}>
+      <h1>💬 Comments</h1>
 
-      <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Write comment..."
-      />
-      <button onClick={addComment}>Post</button>
-
-      {comments.map((c) => (
-        <div key={c.id} style={{ marginTop: "15px" }}>
-          <img src={c.photoURL} width={30} style={{ borderRadius: "50%" }} />
-          <b>{c.username}</b>
-          <p>{c.text}</p>
-        </div>
-      ))}
+      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+        <Image
+          src="/default-avatar.png"
+          alt="Default user avatar"
+          width={35}
+          height={35}
+          style={{ borderRadius: "50%" }}
+        />
+        <p>No comments yet.</p>
+      </div>
     </div>
   );
 }

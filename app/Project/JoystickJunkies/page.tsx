@@ -9,6 +9,7 @@ import { MemberDropdown } from "../Services/MemberContent/MemberDropdown";
 import { Home } from "../Services/Home";
 import service from "../Services/Service.json";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 /* ================= THEME ================= */
 const theme = {
@@ -17,7 +18,6 @@ const theme = {
   primaryRed: "#e11d48",
   border: "#2a2a2a",
   textMain: "#ffffff",
-  textDim: "#b0b0b0",
 };
 
 /* ================= TYPES ================= */
@@ -32,200 +32,133 @@ function Navbar() {
   const router = useRouter();
 
   return (
-    <nav style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      padding: "0 40px",
-      height: "70px",
-      backgroundColor: theme.navBg,
-      borderBottom: `2px solid ${theme.primaryRed}`,
-      color: theme.textMain,
-    }}>
+    <nav
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        padding: "0 40px",
+        height: "70px",
+        backgroundColor: theme.navBg,
+        borderBottom: `2px solid ${theme.primaryRed}`,
+        alignItems: "center",
+      }}
+    >
       {/* LOGO */}
-      <div style={{ fontSize: "1.3rem", fontWeight: "bold" }}>
+      <div style={{ fontWeight: "bold" }}>
         <span style={{ color: theme.primaryRed }}>JOYSTICK</span> JUNKIES
       </div>
 
-      {/* NAV */}
+      {/* NAV LINKS */}
       <div style={{ display: "flex", gap: "30px", alignItems: "center" }}>
-        <NavItem><Home /></NavItem>
-        <NavItem><WhatNewDropdown /></NavItem>
-        <NavItem><MemberDropdown /></NavItem>
+        <Home />
+        <WhatNewDropdown />
+        <MemberDropdown />
       </div>
 
-      {/* RIGHT */}
-      <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+      {/* RIGHT SIDE */}
+      <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
         {user && profile && (
           <div
             onClick={() => router.push("/Project/Profile")}
-            style={{ display: "flex", gap: "8px", cursor: "pointer" }}
+            style={{
+              display: "flex",
+              gap: "8px",
+              cursor: "pointer",
+              alignItems: "center",
+            }}
           >
-            <img
-              src={profile.photoURL}
-              width={28}
-              height={28}
-              style={{ borderRadius: "50%", border: `1px solid ${theme.border}` }}
+            <Image
+              src={profile.photoURL || "/default-avatar.png"}
+              alt="Profile picture"
+              width={30}
+              height={30}
+              style={{ borderRadius: "50%" }}
             />
-            <span>{profile.username}</span>
+            <span style={{ fontSize: "0.85rem" }}>
+              {profile.username}
+            </span>
           </div>
         )}
 
         {user ? (
-          <button style={authBtn} onClick={signOutUser}>Logout</button>
+          <button onClick={signOutUser}>Logout</button>
         ) : (
-          <button style={authBtn} onClick={signInWithGoogle}>Login</button>
+          <button onClick={signInWithGoogle}>Login</button>
         )}
       </div>
     </nav>
   );
 }
 
-/* ================= NAV ITEM ================= */
-function NavItem({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{
-      color: "#e5e5e5",
-      fontSize: "0.85rem",
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: "0.5px",
-      display: "flex",
-      alignItems: "center",
-    }}>
-      {children}
-    </div>
-  );
-}
-
 /* ================= SERVICES ================= */
 function ServicesSection() {
   const { user } = useUserAuth();
-  const router = useRouter();
-
   const [services, setServices] = useState<Service[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchData = async () => {
       try {
+        // 🔹 Not logged in → use JSON
         if (!user) {
-          setServices(service);
-          setLoading(false);
+          setServices(service as Service[]);
           return;
         }
 
+        // 🔹 Fetch from Firestore
         const snapshot = await getDocs(collection(db, "services"));
+
         const data: Service[] = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...(doc.data() as Omit<Service, "id">),
         }));
 
-        setServices(data.length ? data : service);
-      } catch {
-        setServices(service);
+        // 🔹 Fallback if empty
+        setServices(data.length ? data : (service as Service[]));
+      } catch (err) {
+        console.error("Firestore error:", err);
+        setServices(service as Service[]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchServices();
+    fetchData();
   }, [user]);
 
-  if (loading) return <p style={{ color: "white" }}>Loading...</p>;
-
-  const filtered = services.filter((s) =>
-    s.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (loading) {
+    return <p style={{ color: "white", padding: "20px" }}>Loading...</p>;
+  }
 
   return (
-    <main style={{ background: theme.background, minHeight: "100vh" }}>
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "40px" }}>
-
-        {/* SEARCH */}
-        <input
-          type="text"
-          placeholder="Search forums..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={searchStyle}
-        />
-
-        {/* LIST */}
-        {filtered.map((item, i) => (
+    <main
+      style={{
+        background: theme.background,
+        minHeight: "100vh",
+        padding: "40px",
+        color: "white",
+      }}
+    >
+      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        {services.map((s) => (
           <div
-            key={item.id || i}
-            style={cardStyle}
-            onClick={() => {
-              // ✅ CLICK ROUTING LOGIC
-              if (item.name.toLowerCase().includes("discussion")) {
-                router.push("/Project/DiscussionBoard");
-              } else {
-                router.push(`/Project/DiscussionBoard/Comment/${item.id || i}`);
-              }
+            key={s.id || s.name}
+            style={{
+              padding: "15px",
+              marginBottom: "10px",
+              backgroundColor: "#1c1c1c",
+              border: `1px solid ${theme.border}`,
+              borderLeft: `3px solid ${theme.primaryRed}`,
+              borderRadius: "6px",
             }}
           >
-            <div>{item.name}</div>
-
-            {/* ✅ COMMENT BUTTON */}
-            <button
-              style={commentBtn}
-              onClick={(e) => {
-                e.stopPropagation();
-                router.push(`/Project/DiscussionBoard/Comment/${item.id || i}`);
-              }}
-            >
-              💬 Comments
-            </button>
+            {s.name}
           </div>
         ))}
       </div>
     </main>
   );
 }
-
-/* ================= STYLES ================= */
-
-const searchStyle = {
-  width: "100%",
-  padding: "12px",
-  marginBottom: "20px",
-  backgroundColor: "#2a2a2a",
-  border: "1px solid #2a2a2a",
-  color: "white",
-};
-
-const cardStyle = {
-  padding: "15px",
-  marginBottom: "10px",
-  backgroundColor: "#1c1c1c",
-  border: "1px solid #2a2a2a",
-  borderLeft: "3px solid #e11d48",
-  borderRadius: "6px",
-  color: "white",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  cursor: "pointer",
-};
-
-const commentBtn = {
-  background: "none",
-  border: "1px solid #444",
-  color: "#aaa",
-  padding: "5px 10px",
-  fontSize: "0.75rem",
-  cursor: "pointer",
-};
-
-const authBtn = {
-  background: "none",
-  border: "1px solid #333",
-  color: "#e5e5e5",
-  padding: "6px 12px",
-  cursor: "pointer",
-};
 
 /* ================= APP ================= */
 export default function JoystickJunkies() {

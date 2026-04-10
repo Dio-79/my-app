@@ -1,88 +1,96 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  orderBy,
-} from "firebase/firestore";
+import { collection, addDoc, onSnapshot, query } from "firebase/firestore";
 import { db } from "../../../Auth/firebase";
-import { useUserAuth } from "../../../Auth/auth-context";
-import { useParams } from "next/navigation";
+import Image from "next/image";
 
 /* ================= TYPES ================= */
-type Comment = {
+interface Comment {
   id: string;
   text: string;
-  username: string;
-  photoURL: string;
   createdAt: number;
-};
+  user?: {
+    name?: string;
+    photoURL?: string;
+  };
+}
 
-export default function CommentPage() {
-  const { user, profile } = useUserAuth();
-  const { id } = useParams();
-
+export default function PostComments({ params }: { params: { id: string } }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
 
-  /* 🔥 REALTIME COMMENTS */
+  /* ================= FETCH COMMENTS ================= */
   useEffect(() => {
-    const q = query(
-      collection(db, "posts", id as string, "comments"),
-      orderBy("createdAt", "desc")
-    );
+    const q = query(collection(db, "posts", params.id, "comments"));
 
-    const unsub = onSnapshot(q, (snap) => {
-      const data: Comment[] = snap.docs.map((doc) => ({
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data: Comment[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as Omit<Comment, "id">),
       }));
+
       setComments(data);
     });
 
-    return () => unsub();
-  }, [id]);
+    return () => unsubscribe();
+  }, [params.id]);
 
-  /* 🔥 ADD COMMENT */
+  /* ================= ADD COMMENT ================= */
   const addComment = async () => {
-    if (!text || !user || !profile) return;
+    if (!text) return;
 
-    await addDoc(collection(db, "posts", id as string, "comments"), {
+    await addDoc(collection(db, "posts", params.id, "comments"), {
       text,
-      userId: user.uid,
-      username: profile.username,
-      photoURL: profile.photoURL,
       createdAt: Date.now(),
+      user: {
+        name: "Anonymous",
+        photoURL: "/default-avatar.png",
+      },
     });
 
     setText("");
   };
 
   return (
-    <div style={{ padding: "40px", color: "white" }}>
-      <h2>💬 Comments</h2>
+    <div style={{ padding: "40px", color: "white", background: "#1a1a1a", minHeight: "100vh" }}>
+      <h1>💬 Comments</h1>
 
-      {/* ADD COMMENT */}
-      <div>
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Write a comment..."
-        />
-        <button onClick={addComment}>Post</button>
-      </div>
-
-      {/* LIST */}
+      {/* COMMENT LIST */}
       {comments.map((c) => (
-        <div key={c.id} style={{ marginTop: "15px" }}>
-          <img src={c.photoURL} width={30} />
-          <b>{c.username}</b>
-          <p>{c.text}</p>
+        <div key={c.id} style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+          <Image
+            src={c.user?.photoURL || "/default-avatar.png"}
+            alt="User avatar"
+            width={35}
+            height={35}
+            style={{ borderRadius: "50%" }}
+          />
+          <div>
+            <strong>{c.user?.name || "User"}</strong>
+            <p>{c.text}</p>
+          </div>
         </div>
       ))}
+
+      {/* INPUT */}
+      <input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Write a comment..."
+        style={{
+          padding: "10px",
+          width: "100%",
+          marginTop: "20px",
+          background: "#2a2a2a",
+          border: "1px solid #333",
+          color: "white",
+        }}
+      />
+
+      <button onClick={addComment} style={{ marginTop: "10px" }}>
+        Add Comment
+      </button>
     </div>
   );
 }
