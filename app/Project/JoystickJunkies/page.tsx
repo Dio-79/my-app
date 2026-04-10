@@ -18,6 +18,7 @@ const theme = {
   primaryRed: "#e11d48",
   border: "#2a2a2a",
   textMain: "#ffffff",
+  textDim: "#b0b0b0",
 };
 
 /* ================= TYPES ================= */
@@ -32,58 +33,42 @@ function Navbar() {
   const router = useRouter();
 
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        padding: "0 40px",
-        height: "70px",
-        backgroundColor: theme.navBg,
-        borderBottom: `2px solid ${theme.primaryRed}`,
-        alignItems: "center",
-      }}
-    >
-      {/* LOGO */}
-      <div style={{ fontWeight: "bold" }}>
+    <nav style={navStyle}>
+      <div style={{ fontWeight: "bold", color: theme.textMain }}>
         <span style={{ color: theme.primaryRed }}>JOYSTICK</span> JUNKIES
       </div>
 
-      {/* NAV LINKS */}
-      <div style={{ display: "flex", gap: "30px", alignItems: "center" }}>
+      <div style={navLinks}>
         <Home />
         <WhatNewDropdown />
         <MemberDropdown />
       </div>
 
-      {/* RIGHT SIDE */}
-      <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
+      <div style={rightNav}>
         {user && profile && (
           <div
             onClick={() => router.push("/Project/Profile")}
-            style={{
-              display: "flex",
-              gap: "8px",
-              cursor: "pointer",
-              alignItems: "center",
-            }}
+            style={profileBox}
           >
             <Image
               src={profile.photoURL || "/default-avatar.png"}
-              alt="Profile picture"
+              alt="Profile"
               width={30}
               height={30}
               style={{ borderRadius: "50%" }}
             />
-            <span style={{ fontSize: "0.85rem" }}>
-              {profile.username}
-            </span>
+            <span>{profile.username}</span>
           </div>
         )}
 
         {user ? (
-          <button onClick={signOutUser}>Logout</button>
+          <button style={authBtn} onClick={signOutUser}>
+            Logout
+          </button>
         ) : (
-          <button onClick={signInWithGoogle}>Login</button>
+          <button style={authBtn} onClick={signInWithGoogle}>
+            Login
+          </button>
         )}
       </div>
     </nav>
@@ -93,19 +78,18 @@ function Navbar() {
 /* ================= SERVICES ================= */
 function ServicesSection() {
   const { user } = useUserAuth();
+  const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 🔹 Not logged in → use JSON
         if (!user) {
           setServices(service as Service[]);
           return;
         }
 
-        // 🔹 Fetch from Firestore
         const snapshot = await getDocs(collection(db, "services"));
 
         const data: Service[] = snapshot.docs.map((doc) => ({
@@ -113,10 +97,8 @@ function ServicesSection() {
           ...(doc.data() as Omit<Service, "id">),
         }));
 
-        // 🔹 Fallback if empty
         setServices(data.length ? data : (service as Service[]));
-      } catch (err) {
-        console.error("Firestore error:", err);
+      } catch {
         setServices(service as Service[]);
       } finally {
         setLoading(false);
@@ -131,26 +113,15 @@ function ServicesSection() {
   }
 
   return (
-    <main
-      style={{
-        background: theme.background,
-        minHeight: "100vh",
-        padding: "40px",
-        color: "white",
-      }}
-    >
+    <main style={mainStyle}>
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
         {services.map((s) => (
           <div
             key={s.id || s.name}
-            style={{
-              padding: "15px",
-              marginBottom: "10px",
-              backgroundColor: "#1c1c1c",
-              border: `1px solid ${theme.border}`,
-              borderLeft: `3px solid ${theme.primaryRed}`,
-              borderRadius: "6px",
-            }}
+            onClick={() =>
+              router.push(`/Project/DiscussionBoard?topic=${s.name}`)
+            }
+            style={cardStyle}
           >
             {s.name}
           </div>
@@ -159,6 +130,65 @@ function ServicesSection() {
     </main>
   );
 }
+
+/* ================= STYLES ================= */
+
+const navStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "0 40px",
+  height: "70px",
+  backgroundColor: theme.navBg,
+  borderBottom: `2px solid ${theme.primaryRed}`,
+  alignItems: "center",
+};
+
+const navLinks = {
+  display: "flex",
+  gap: "30px",
+  alignItems: "center",
+};
+
+const rightNav = {
+  display: "flex",
+  gap: "15px",
+  alignItems: "center",
+};
+
+const profileBox = {
+  display: "flex",
+  gap: "8px",
+  cursor: "pointer",
+  alignItems: "center",
+  color: theme.textMain,
+};
+
+const authBtn = {
+  background: "none",
+  border: "1px solid #333",
+  color: theme.textMain,
+  padding: "6px 12px",
+  cursor: "pointer",
+};
+
+const mainStyle = {
+  background: theme.background,
+  minHeight: "100vh",
+  padding: "40px",
+  color: theme.textMain,
+};
+
+const cardStyle = {
+  padding: "15px",
+  marginBottom: "12px",
+  backgroundColor: "#1c1c1c",
+  border: `1px solid ${theme.border}`,
+  borderLeft: `3px solid ${theme.primaryRed}`,
+  borderRadius: "6px",
+  cursor: "pointer",
+  color: theme.textMain,
+  transition: "0.2s",
+};
 
 /* ================= APP ================= */
 export default function JoystickJunkies() {
