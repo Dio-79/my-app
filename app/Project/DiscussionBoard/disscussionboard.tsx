@@ -11,7 +11,6 @@ import {
   query,
 } from "firebase/firestore";
 import { db } from "../Auth/firebase";
-import { useRouter } from "next/navigation";
 import { useUserAuth } from "../Auth/auth-context";
 
 /* ================= THEME ================= */
@@ -34,7 +33,7 @@ type Post = {
   userId?: string;
 };
 
-export   function DiscussionBoard() {
+export function DiscussionBoard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -42,7 +41,7 @@ export   function DiscussionBoard() {
 
   const { user } = useUserAuth();
 
-  /* ================= REAL-TIME FETCH ================= */
+  /* ================= REAL-TIME POSTS ================= */
   useEffect(() => {
     const q = query(collection(db, "posts"));
 
@@ -70,61 +69,39 @@ export   function DiscussionBoard() {
 
   /* ================= CREATE POST ================= */
   const createPost = async () => {
-    try {
-      if (!title || !content) {
-        alert("Fill all fields");
-        return;
-      }
+    if (!title || !content) return alert("Fill all fields");
+    if (!user) return alert("Login required");
 
-      if (!user) {
-        alert("You must be logged in to post");
-        return;
-      }
+    await addDoc(collection(db, "posts"), {
+      title,
+      content,
+      likes: 0,
+      createdAt: Date.now(),
+      userId: user.uid,
+    });
 
-      await addDoc(collection(db, "posts"), {
-        title,
-        content,
-        likes: 0,
-        createdAt: Date.now(),
-        userId: user.uid,
-      });
-
-      setTitle("");
-      setContent("");
-      setShowCreate(false);
-    } catch (err) {
-      console.error("CREATE POST ERROR:", err);
-      alert("Permission denied or Firebase error");
-    }
+    setTitle("");
+    setContent("");
+    setShowCreate(false);
   };
 
   /* ================= LIKE ================= */
   const likePost = async (id: string) => {
-    try {
-      const postRef = doc(db, "posts", id);
-      await updateDoc(postRef, { likes: increment(1) });
-    } catch (err) {
-      console.error("LIKE ERROR:", err);
-    }
+    const ref = doc(db, "posts", id);
+    await updateDoc(ref, { likes: increment(1) });
   };
 
   return (
     <div style={pageStyle}>
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        {/* HEADER */}
         <h1 style={headerStyle}>
           <span style={{ color: theme.primaryRed }}>🔥</span> COMMUNITY DISCUSSIONS
         </h1>
 
-        {/* RED CREATE BUTTON */}
-        <button
-          onClick={() => setShowCreate(!showCreate)}
-          style={createBtn}
-        >
+        <button onClick={() => setShowCreate(!showCreate)} style={createBtn}>
           {showCreate ? "✖ CANCEL" : "➕ NEW DISCUSSION"}
         </button>
 
-        {/* CREATE BOX */}
         {showCreate && (
           <div style={createBoxStyle}>
             <input
@@ -147,7 +124,6 @@ export   function DiscussionBoard() {
           </div>
         )}
 
-        {/* POSTS */}
         <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
           {posts.map((post) => (
             <PostCard key={post.id} post={post} likePost={likePost} />
@@ -167,7 +143,42 @@ function PostCard({
   likePost: (id: string) => void;
 }) {
   const [hover, setHover] = useState(false);
-  const router = useRouter();
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [text, setText] = useState("");
+
+  /* ================= REAL-TIME COMMENTS ================= */
+  useEffect(() => {
+    if (!showComments) return;
+
+    const q = query(collection(db, "posts", post.id, "comments"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setComments(data);
+    });
+
+    return () => unsubscribe();
+  }, [showComments, post.id]);
+
+  /* ================= ADD COMMENT ================= */
+  const addComment = async () => {
+    if (!text.trim()) return;
+
+    await addDoc(collection(db, "posts", post.id, "comments"), {
+      text,
+      createdAt: Date.now(),
+      user: {
+        name: "Anonymous",
+        photoURL: "/default-avatar.png",
+      },
+    });
+
+    setText("");
+  };
 
   return (
     <div
@@ -176,43 +187,61 @@ function PostCard({
       style={{
         ...postCardStyle,
         backgroundColor: hover ? "#2a2a2a" : theme.cardBg,
+        flexDirection: "column",
       }}
     >
-      <div style={{ flex: 1 }}>
-        <h2 style={titleStyle}>{post.title}</h2>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ flex: 1 }}>
+          <h2 style={titleStyle}>{post.title}</h2>
+          <p style={contentStyle}>{post.content}</p>
 
-        <p style={contentStyle}>{post.content}</p>
+          <div style={dateStyle}>
+            {new Date(post.createdAt).toLocaleString()}
+          </div>
 
-        <div style={dateStyle}>
-          Posted {new Date(post.createdAt).toLocaleString()}
+          <button
+            onClick={() => setShowComments(!showComments)}
+            style={commentBtn}
+          >
+            💬 {showComments ? "HIDE COMMENTS" : "VIEW COMMENTS"}
+          </button>
         </div>
 
-        <button
-          onClick={() =>
-            router.push(`/Project/DiscussionBoard/Comment/${post.id}`)
-          }
-          style={commentBtn}
-        >
-          💬 VIEW COMMENTS
-        </button>
+        <div style={rightPanel}>
+          <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
+            {post.likes}
+          </div>
+
+          <div style={{ fontSize: "0.7rem", color: theme.textDim }}>
+            LIKES
+          </div>
+
+          <button onClick={() => likePost(post.id)} style={likeBtn}>
+            👍 LIKE
+          </button>
+        </div>
       </div>
 
-      <div style={rightPanel}>
-        <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
-          {post.likes}
-        </div>
+      {/* COMMENTS */}
+      {showComments && (
+        <div style={commentBox}>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Write a comment..."
+            style={inputStyle}
+          />
 
-        <div style={{ fontSize: "0.7rem", color: theme.textDim }}>
-          LIKES
-        </div>
+          <button onClick={addComment}>Add Comment</button>
 
-        <button
-          onClick={() => likePost(post.id)}
-          style={likeBtn}
-        >
-          👍 LIKE
-        </button>
-      </div>
+          {comments.map((c) => (
+            <div key={c.id} style={commentItem}>
+              <strong>{c.user?.name || "User"}</strong>
+              <p>{c.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -254,57 +283,45 @@ const createBoxStyle = {
 
 const inputStyle = {
   width: "100%",
-  padding: "12px",
+  padding: "10px",
   marginBottom: "10px",
   backgroundColor: theme.inputBg,
   border: `1px solid ${theme.border}`,
   color: "white",
-  borderRadius: "6px",
 };
 
 const postBtn = {
   backgroundColor: theme.primaryRed,
   color: "white",
   border: "none",
-  padding: "10px 20px",
-  borderRadius: "6px",
+  padding: "10px",
   cursor: "pointer",
 };
 
 const postCardStyle = {
   display: "flex",
-  justifyContent: "space-between",
   padding: "20px",
   border: `1px solid ${theme.border}`,
   borderRadius: "6px",
 };
 
-const titleStyle = {
-  color: theme.primaryRed,
-};
+const titleStyle = { color: theme.primaryRed };
 
-const contentStyle = {
-  color: "#ccc",
-};
+const contentStyle = { color: "#ccc" };
 
-const dateStyle = {
-  fontSize: "0.8rem",
-  color: theme.textDim,
-};
+const dateStyle = { fontSize: "0.8rem", color: theme.textDim };
 
 const rightPanel = {
   textAlign: "center" as const,
   borderLeft: `1px solid ${theme.border}`,
   paddingLeft: "20px",
-  marginLeft: "20px",
 };
 
 const likeBtn = {
   marginTop: "10px",
-  background: "transparent",
   border: `1px solid ${theme.primaryRed}`,
   color: theme.primaryRed,
-  padding: "5px 10px",
+  background: "transparent",
   cursor: "pointer",
 };
 
@@ -314,4 +331,26 @@ const commentBtn = {
   border: "none",
   color: "#aaa",
   cursor: "pointer",
+};
+
+const commentBox = {
+  marginTop: "15px",
+  padding: "15px",
+  background: "#181818",
+  borderRadius: "6px",
+};
+
+const commentItem = {
+  padding: "10px",
+  borderBottom: `1px solid ${theme.border}`,
+};
+
+type Comment = {
+  id: string;
+  text: string;
+  createdAt: number;
+  user?: {
+    name?: string;
+    photoURL?: string;
+  };
 };
