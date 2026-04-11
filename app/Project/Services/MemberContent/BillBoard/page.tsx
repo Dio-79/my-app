@@ -1,7 +1,7 @@
 "use client";
 
 import { CSSProperties, useState } from "react";
-import { DiscussionBoard } from "@/app/Project/DiscussionBoard/page";
+import { DiscussionBoard } from "@/app/Project/DiscussionBoard/disscussionboard";
 
 /* ================= THEME ================= */
 const theme = {

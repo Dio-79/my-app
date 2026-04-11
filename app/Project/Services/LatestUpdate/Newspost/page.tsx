@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../../../Auth/firebase";
-import { DiscussionBoard } from "@/app/Project/DiscussionBoard/page";
+import { DiscussionBoard } from "@/app/Project/DiscussionBoard/disscussionboard";
 
 type Post = {
   id: string;

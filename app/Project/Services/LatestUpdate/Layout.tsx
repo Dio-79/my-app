@@ -53,7 +53,7 @@ export default function MemberContentLayout({
     },
     [router]
   );
-
+console.log(pathname);
   return (
     <UserAuthContextProvider>
       <div style={containerStyle}>

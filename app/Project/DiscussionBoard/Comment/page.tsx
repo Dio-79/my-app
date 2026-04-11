@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-export  function CommentPage() {
+export default  function CommentPage() {
   return (
     <div style={{ padding: "40px", background: "#1a1a1a", minHeight: "100vh", color: "white" }}>
       <h1>💬 Comments</h1>
