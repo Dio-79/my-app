@@ -9,6 +9,7 @@ import {
   increment,
   onSnapshot,
   query,
+  where,
   DocumentData,
 } from "firebase/firestore";
 import { db } from "../Auth/firebase";
@@ -43,6 +44,7 @@ type Post = {
   id: string;
   title: string;
   content: string;
+  topic: string;
   likes: number;
   createdAt: number;
   userId?: string;
@@ -50,17 +52,20 @@ type Post = {
 
 /* ================= MAIN ================= */
 
-export function DiscussionBoard() {
+export function DiscussionBoard({ topic }: { topic: string }) {
+  const { user, profile } = useUserAuth();
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [showCreate, setShowCreate] = useState(false);
 
-  const { user } = useUserAuth();
-
   /* ================= REAL-TIME POSTS ================= */
   useEffect(() => {
-    const q = query(collection(db, "posts"));
+    const q = query(
+      collection(db, "posts"),
+      where("topic", "==", topic)
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data: Post[] = snapshot.docs.map((docItem) => {
@@ -70,6 +75,7 @@ export function DiscussionBoard() {
           id: docItem.id,
           title: d.title,
           content: d.content,
+          topic: d.topic,
           likes: d.likes ?? 0,
           createdAt: d.createdAt ?? 0,
           userId: d.userId,
@@ -84,7 +90,7 @@ export function DiscussionBoard() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [topic]);
 
   /* ================= CREATE POST ================= */
   const createPost = async () => {
@@ -101,9 +107,14 @@ export function DiscussionBoard() {
     await addDoc(collection(db, "posts"), {
       title,
       content,
+      topic,
       likes: 0,
       createdAt: Date.now(),
       userId: user.uid,
+      user: {
+        name: profile?.username || "User",
+        photoURL: profile?.photoURL || "/default-avatar.png",
+      },
     });
 
     setTitle("");
@@ -113,15 +124,16 @@ export function DiscussionBoard() {
 
   /* ================= LIKE ================= */
   const likePost = async (id: string) => {
-    const ref = doc(db, "posts", id);
-    await updateDoc(ref, { likes: increment(1) });
+    await updateDoc(doc(db, "posts", id), {
+      likes: increment(1),
+    });
   };
 
   return (
     <div style={pageStyle}>
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
         <h1 style={headerStyle}>
-          <span style={{ color: theme.primaryRed }}>🔥</span> COMMUNITY DISCUSSIONS
+          <span style={{ color: theme.primaryRed }}>🔥</span> {topic} DISCUSSIONS
         </h1>
 
         <button onClick={() => setShowCreate(!showCreate)} style={createBtn}>
@@ -169,6 +181,8 @@ function PostCard({
   post: Post;
   likePost: (id: string) => void;
 }) {
+  const { user, profile } = useUserAuth();
+
   const [hover, setHover] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -201,13 +215,14 @@ function PostCard({
   /* ================= ADD COMMENT ================= */
   const addComment = async () => {
     if (!text.trim()) return;
+    if (!user) return alert("Login required");
 
     await addDoc(collection(db, "posts", post.id, "comments"), {
       text,
       createdAt: Date.now(),
       user: {
-        name: "Anonymous",
-        photoURL: "/default-avatar.png",
+        name: profile?.username || "User",
+        photoURL: profile?.photoURL || "/default-avatar.png",
       },
     });
 
@@ -256,7 +271,6 @@ function PostCard({
         </div>
       </div>
 
-      {/* COMMENTS */}
       {showComments && (
         <div style={commentBox}>
           <input

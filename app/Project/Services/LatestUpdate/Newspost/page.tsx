@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../../../Auth/firebase";
-import { DiscussionBoard } from "@/app/Project/DiscussionBoard/disscussionboard";
+import { useRouter } from "next/navigation";
 
 type Post = {
   id: string;
@@ -11,6 +11,7 @@ type Post = {
   content: string;
   likes: number;
   createdAt: number;
+  topic?: string;
 };
 
 const THEME = {
@@ -25,6 +26,7 @@ const THEME = {
 export default function NewPostsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -55,11 +57,21 @@ export default function NewPostsPage() {
       <h1 style={titleStyle}>🆕 NEW POSTS</h1>
 
       {posts.map((post) => (
-        <div key={post.id} style={cardStyle}>
+        <div
+          key={post.id}
+          style={cardStyle}
+          onClick={() =>
+            router.push(
+              `/Project/DiscussionBoard?topic=${post.topic || "General"}`
+            )
+          }
+        >
           <h3 style={{ color: THEME.primaryRed }}>{post.title}</h3>
           <p>{post.content}</p>
-           <DiscussionBoard/>
 
+          <small style={{ color: THEME.textDim }}>
+            {new Date(post.createdAt).toLocaleString()}
+          </small>
         </div>
       ))}
     </div>
@@ -83,5 +95,5 @@ const cardStyle: React.CSSProperties = {
   border: `1px solid ${THEME.border}`,
   padding: "20px",
   marginBottom: "10px",
+  cursor: "pointer",
 };
-

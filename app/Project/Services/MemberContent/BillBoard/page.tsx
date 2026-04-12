@@ -1,7 +1,7 @@
 "use client";
 
 import { CSSProperties, useState } from "react";
-import { DiscussionBoard } from "@/app/Project/DiscussionBoard/disscussionboard";
+import {DiscussionBoard} from "../../../DiscussionBoard/disscussionboard";
 
 /* ================= THEME ================= */
 const theme = {
@@ -29,7 +29,7 @@ export default function BillboardPage() {
         COMMUNITY <span style={{ color: "white" }}>BILLBOARD</span>
       </h1>
 
-      {/* RED BUTTON TO OPEN DISCUSSION BOARD */}
+      {/* TOGGLE BUTTON */}
       <button
         style={discussionButtonStyle}
         onClick={() => setShowDiscussion(!showDiscussion)}
@@ -37,14 +37,14 @@ export default function BillboardPage() {
         {showDiscussion ? "✖ Close Discussion Board" : "➕ Open Discussion Board"}
       </button>
 
-      {/* DISCUSSION BOARD (TOGGLE) */}
+      {/* DISCUSSION BOARD */}
       {showDiscussion && (
         <div style={{ marginTop: "20px" }}>
-          <DiscussionBoard />
+          <DiscussionBoard topic="Billboard Chat" />
         </div>
       )}
 
-      {/* BILLBOARD POSTS */}
+      {/* POSTS */}
       <div style={listStyle}>
         {posts.map((post, i) => (
           <div key={i} style={cardStyle}>
