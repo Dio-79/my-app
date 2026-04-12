@@ -9,6 +9,7 @@ import {
   increment,
   onSnapshot,
   query,
+  DocumentData,
 } from "firebase/firestore";
 import { db } from "../Auth/firebase";
 import { useUserAuth } from "../Auth/auth-context";
@@ -24,6 +25,20 @@ const theme = {
   textDim: "#a0a0a0",
 };
 
+/* ================= TYPES ================= */
+
+type UserInfo = {
+  name?: string;
+  photoURL?: string;
+};
+
+type Comment = {
+  id: string;
+  text: string;
+  createdAt: number;
+  user?: UserInfo;
+};
+
 type Post = {
   id: string;
   title: string;
@@ -32,6 +47,8 @@ type Post = {
   createdAt: number;
   userId?: string;
 };
+
+/* ================= MAIN ================= */
 
 export function DiscussionBoard() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -45,32 +62,41 @@ export function DiscussionBoard() {
   useEffect(() => {
     const q = query(collection(db, "posts"));
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const data: Post[] = snapshot.docs.map((docItem) => ({
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data: Post[] = snapshot.docs.map((docItem) => {
+        const d = docItem.data() as DocumentData;
+
+        return {
           id: docItem.id,
-          ...(docItem.data() as Omit<Post, "id">),
-        }));
+          title: d.title,
+          content: d.content,
+          likes: d.likes ?? 0,
+          createdAt: d.createdAt ?? 0,
+          userId: d.userId,
+        };
+      });
 
-        const sorted = data.sort(
-          (a, b) => b.likes - a.likes || b.createdAt - a.createdAt
-        );
+      const sorted = data.sort(
+        (a, b) => b.likes - a.likes || b.createdAt - a.createdAt
+      );
 
-        setPosts(sorted);
-      },
-      (error) => {
-        console.error("SNAPSHOT ERROR:", error);
-      }
-    );
+      setPosts(sorted);
+    });
 
     return () => unsubscribe();
   }, []);
 
   /* ================= CREATE POST ================= */
   const createPost = async () => {
-    if (!title || !content) return alert("Fill all fields");
-    if (!user) return alert("Login required");
+    if (!title.trim() || !content.trim()) {
+      alert("Fill all fields");
+      return;
+    }
+
+    if (!user) {
+      alert("Login required");
+      return;
+    }
 
     await addDoc(collection(db, "posts"), {
       title,
@@ -135,6 +161,7 @@ export function DiscussionBoard() {
 }
 
 /* ================= POST CARD ================= */
+
 function PostCard({
   post,
   likePost,
@@ -144,7 +171,7 @@ function PostCard({
 }) {
   const [hover, setHover] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
 
   /* ================= REAL-TIME COMMENTS ================= */
@@ -154,10 +181,17 @@ function PostCard({
     const q = query(collection(db, "posts", post.id, "comments"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const data: Comment[] = snapshot.docs.map((docItem) => {
+        const d = docItem.data() as DocumentData;
+
+        return {
+          id: docItem.id,
+          text: d.text ?? "",
+          createdAt: d.createdAt ?? 0,
+          user: d.user,
+        };
+      });
+
       setComments(data);
     });
 
@@ -306,9 +340,7 @@ const postCardStyle = {
 };
 
 const titleStyle = { color: theme.primaryRed };
-
 const contentStyle = { color: "#ccc" };
-
 const dateStyle = { fontSize: "0.8rem", color: theme.textDim };
 
 const rightPanel = {
@@ -343,14 +375,4 @@ const commentBox = {
 const commentItem = {
   padding: "10px",
   borderBottom: `1px solid ${theme.border}`,
-};
-
-type Comment = {
-  id: string;
-  text: string;
-  createdAt: number;
-  user?: {
-    name?: string;
-    photoURL?: string;
-  };
 };
