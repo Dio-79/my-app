@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../Auth/firebase";
 import { useUserAuth } from "../Auth/auth-context";
-import { uploadProfileImage } from"../ulits/uploadprofileimage"
+import { uploadProfileImage } from "../utils/uploadprofileimage"; 
 import { deleteUser } from "firebase/auth";
-import { fonts, FontPreference } from "../ulits/font"
+import { fonts, FontPreference } from "../utils/font"; 
+
 /* ================= TYPES ================= */
 
 type Profile = {
@@ -20,7 +21,7 @@ type Profile = {
 /* ================= MAIN ================= */
 
 export default function ProfilePage() {
-  const { user } = useUserAuth();
+  const { user, loading } = useUserAuth();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -45,7 +46,6 @@ export default function ProfilePage() {
         setProfile(typedProfile);
         setUsername(typedProfile.username);
 
-        // apply font automatically
         document.body.style.fontFamily =
           fonts[typedProfile.fontPreference];
       }
@@ -58,13 +58,17 @@ export default function ProfilePage() {
   const handleFile = async (file: File) => {
     if (!user) return;
 
-    setPreview(URL.createObjectURL(file));
+    const previewUrl = URL.createObjectURL(file);
+    setPreview(previewUrl);
 
     const url = await uploadProfileImage(file, user.uid);
 
     await updateDoc(doc(db, "users", user.uid), {
       photoURL: url,
     });
+
+    // cleanup memory
+    URL.revokeObjectURL(previewUrl);
   };
 
   /* ================= USERNAME UPDATE ================= */
@@ -103,15 +107,29 @@ export default function ProfilePage() {
     await deleteUser(user);
   };
 
-  if (!profile) return <p style={{ color: "white" }}>Loading...</p>;
+  /* ================= STATES ================= */
+
+  if (loading) {
+    return <p style={{ color: "white" }}>Loading...</p>;
+  }
+
+  if (!user) {
+    return <p style={{ color: "white" }}>Not logged in</p>;
+  }
+
+  if (!profile) {
+    return <p style={{ color: "white" }}>Loading profile...</p>;
+  }
+
+  /* ================= UI ================= */
 
   return (
     <div style={{ padding: "40px", color: "white" }}>
       <h1>Profile Settings</h1>
 
-      {/* IMAGE PREVIEW */}
+      {/* IMAGE */}
       <img
-        src={preview || profile.photoURL}
+        src={preview || profile.photoURL || "/default-avatar.png"} // ✅ SAFE
         width={120}
         height={120}
         style={{ borderRadius: "50%", objectFit: "cover" }}
@@ -137,7 +155,7 @@ export default function ProfilePage() {
         <button onClick={updateUsername}>Save Username</button>
       </div>
 
-      {/* FONT SELECTOR */}
+      {/* FONT */}
       <div>
         <select
           value={profile.fontPreference}
@@ -151,7 +169,7 @@ export default function ProfilePage() {
         </select>
       </div>
 
-      {/* DELETE ACCOUNT */}
+      {/* DELETE */}
       <button onClick={deleteAccount} style={{ color: "red" }}>
         Delete Account
       </button>

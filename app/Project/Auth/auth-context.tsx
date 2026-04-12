@@ -2,7 +2,15 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "./firebase";
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  User,
+} from "firebase/auth";
+
+/* ================= TYPES ================= */
 
 interface Profile {
   username: string;
@@ -12,15 +20,25 @@ interface Profile {
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
+  loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
 }
 
+/* ================= CONTEXT ================= */
+
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-export function UserAuthContextProvider({ children }: { children: React.ReactNode }) {
+/* ================= PROVIDER ================= */
+
+export function UserAuthContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -29,9 +47,13 @@ export function UserAuthContextProvider({ children }: { children: React.ReactNod
       if (u) {
         setProfile({
           username: u.displayName || "User",
-          photoURL: u.photoURL || ""
+          photoURL: u.photoURL || "/default-avatar.png", // ✅ FIX
         });
+      } else {
+        setProfile(null); // ✅ FIX
       }
+
+      setLoading(false);
     });
 
     return () => unsub();
@@ -45,10 +67,14 @@ export function UserAuthContextProvider({ children }: { children: React.ReactNod
   const signOutUser = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ user, profile, signInWithGoogle, signOutUser }}>
+    <AuthContext.Provider
+      value={{ user, profile, loading, signInWithGoogle, signOutUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
+
+/* ================= HOOK ================= */
 
 export const useUserAuth = () => useContext(AuthContext);

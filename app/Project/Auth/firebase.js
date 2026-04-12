@@ -1,9 +1,9 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 
-// ../../Auth/firebase.ts
-
+/* ================= CONFIG (KEEP YOURS EXACTLY) ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyDXTD6n5G_IRkK8YEEPNpG60whu6x1GZXU",
   authDomain: "cprg306-227e8.firebaseapp.com",
@@ -15,13 +15,13 @@ const firebaseConfig = {
   measurementId: "G-C2VNWTL5CV"
 };
 
-const app = initializeApp(firebaseConfig);
+/* ================= INIT (SAFE FOR NEXT.JS HOT RELOAD) ================= */
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-export const auth = getAuth(app);
+/* ================= SERVICES ================= */
 export const db = getFirestore(app);
+export const auth = getAuth(app);
+export const storage = getStorage(app);
+
+/* ================= PROVIDERS ================= */
 export const googleAuthProvider = new GoogleAuthProvider();
-
-
-
-
-
