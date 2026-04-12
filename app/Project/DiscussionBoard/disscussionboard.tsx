@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../Auth/firebase";
 import { useUserAuth } from "../Auth/auth-context";
+import { useRouter } from "next/navigation";
 
 /* ================= THEME ================= */
 const theme = {
@@ -33,13 +34,6 @@ type UserInfo = {
   photoURL?: string;
 };
 
-type Comment = {
-  id: string;
-  text: string;
-  createdAt: number;
-  user?: UserInfo;
-};
-
 type Post = {
   id: string;
   title: string;
@@ -54,6 +48,7 @@ type Post = {
 
 export function DiscussionBoard({ topic }: { topic: string }) {
   const { user, profile } = useUserAuth();
+  const router = useRouter();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [title, setTitle] = useState("");
@@ -133,11 +128,11 @@ export function DiscussionBoard({ topic }: { topic: string }) {
     <div style={pageStyle}>
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
         <h1 style={headerStyle}>
-          <span style={{ color: theme.primaryRed }}>🔥</span> {topic} DISCUSSIONS
+          🔥 {topic} DISCUSSIONS
         </h1>
 
         <button onClick={() => setShowCreate(!showCreate)} style={createBtn}>
-          {showCreate ? "✖ CANCEL" : "➕ NEW DISCUSSION"}
+          {showCreate ? "✖ CANCEL" : "➕ NEW THREAD"}
         </button>
 
         {showCreate && (
@@ -162,9 +157,15 @@ export function DiscussionBoard({ topic }: { topic: string }) {
           </div>
         )}
 
+        {/* THREAD LIST */}
         <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} likePost={likePost} />
+            <ThreadCard
+              key={post.id}
+              post={post}
+              likePost={likePost}
+              onClick={() => router.push(`/Project/DiscussionBoard/${post.id}`)}
+            />
           ))}
         </div>
       </div>
@@ -172,124 +173,63 @@ export function DiscussionBoard({ topic }: { topic: string }) {
   );
 }
 
-/* ================= POST CARD ================= */
+/* ================= THREAD CARD ================= */
 
-function PostCard({
+function ThreadCard({
   post,
   likePost,
+  onClick,
 }: {
   post: Post;
   likePost: (id: string) => void;
+  onClick: () => void;
 }) {
-  const { user, profile } = useUserAuth();
-
   const [hover, setHover] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [text, setText] = useState("");
-
-  /* ================= REAL-TIME COMMENTS ================= */
-  useEffect(() => {
-    if (!showComments) return;
-
-    const q = query(collection(db, "posts", post.id, "comments"));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data: Comment[] = snapshot.docs.map((docItem) => {
-        const d = docItem.data() as DocumentData;
-
-        return {
-          id: docItem.id,
-          text: d.text ?? "",
-          createdAt: d.createdAt ?? 0,
-          user: d.user,
-        };
-      });
-
-      setComments(data);
-    });
-
-    return () => unsubscribe();
-  }, [showComments, post.id]);
-
-  /* ================= ADD COMMENT ================= */
-  const addComment = async () => {
-    if (!text.trim()) return;
-    if (!user) return alert("Login required");
-
-    await addDoc(collection(db, "posts", post.id, "comments"), {
-      text,
-      createdAt: Date.now(),
-      user: {
-        name: profile?.username || "User",
-        photoURL: profile?.photoURL || "/default-avatar.png",
-      },
-    });
-
-    setText("");
-  };
 
   return (
     <div
+      onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
         ...postCardStyle,
         backgroundColor: hover ? "#2a2a2a" : theme.cardBg,
-        flexDirection: "column",
+        cursor: "pointer",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <div style={{ flex: 1 }}>
-          <h2 style={titleStyle}>{post.title}</h2>
-          <p style={contentStyle}>{post.content}</p>
+      {/* LEFT CONTENT */}
+      <div style={{ flex: 1 }}>
+        <h2 style={titleStyle}>{post.title}</h2>
 
-          <div style={dateStyle}>
-            {new Date(post.createdAt).toLocaleString()}
-          </div>
+        <p style={contentStyle}>
+          {post.content.slice(0, 120)}...
+        </p>
 
-          <button
-            onClick={() => setShowComments(!showComments)}
-            style={commentBtn}
-          >
-            💬 {showComments ? "HIDE COMMENTS" : "VIEW COMMENTS"}
-          </button>
-        </div>
-
-        <div style={rightPanel}>
-          <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
-            {post.likes}
-          </div>
-
-          <div style={{ fontSize: "0.7rem", color: theme.textDim }}>
-            LIKES
-          </div>
-
-          <button onClick={() => likePost(post.id)} style={likeBtn}>
-            👍 LIKE
-          </button>
+        <div style={dateStyle}>
+          {new Date(post.createdAt).toLocaleString()}
         </div>
       </div>
 
-      {showComments && (
-        <div style={commentBox}>
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Write a comment..."
-            style={inputStyle}
-          />
-
-          <button onClick={addComment}>Add Comment</button>
-
-          {comments.map((c) => (
-            <div key={c.id} style={commentItem}>
-              <strong>{c.user?.name || "User"}</strong>
-              <p>{c.text}</p>
-            </div>
-          ))}
+      {/* RIGHT PANEL */}
+      <div style={rightPanel}>
+        <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
+          {post.likes}
         </div>
-      )}
+
+        <div style={{ fontSize: "0.7rem", color: theme.textDim }}>
+          LIKES
+        </div>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // 🔥 prevent navigation
+            likePost(post.id);
+          }}
+          style={likeBtn}
+        >
+          👍
+        </button>
+      </div>
     </div>
   );
 }
@@ -351,11 +291,24 @@ const postCardStyle = {
   padding: "20px",
   border: `1px solid ${theme.border}`,
   borderRadius: "6px",
+  transition: "0.2s",
 };
 
-const titleStyle = { color: theme.primaryRed };
-const contentStyle = { color: "#ccc" };
-const dateStyle = { fontSize: "0.8rem", color: theme.textDim };
+const titleStyle = {
+  color: theme.primaryRed,
+  marginBottom: "5px",
+};
+
+const contentStyle = {
+  color: "#ccc",
+  fontSize: "0.9rem",
+};
+
+const dateStyle = {
+  fontSize: "0.75rem",
+  color: theme.textDim,
+  marginTop: "5px",
+};
 
 const rightPanel = {
   textAlign: "center" as const,
@@ -369,24 +322,5 @@ const likeBtn = {
   color: theme.primaryRed,
   background: "transparent",
   cursor: "pointer",
-};
-
-const commentBtn = {
-  marginTop: "10px",
-  background: "none",
-  border: "none",
-  color: "#aaa",
-  cursor: "pointer",
-};
-
-const commentBox = {
-  marginTop: "15px",
-  padding: "15px",
-  background: "#181818",
-  borderRadius: "6px",
-};
-
-const commentItem = {
-  padding: "10px",
-  borderBottom: `1px solid ${theme.border}`,
+  padding: "5px 8px",
 };
