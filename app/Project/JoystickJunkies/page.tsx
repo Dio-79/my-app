@@ -57,7 +57,9 @@ function Navbar() {
               height={30}
               style={{ borderRadius: "50%" }}
             />
-            <span>{profile.username}</span>
+            <span style={{ color: theme.textMain }}>
+              {profile.username}
+            </span>
           </div>
         )}
 
@@ -75,7 +77,7 @@ function Navbar() {
   );
 }
 
-/* ================= SERVICES ================= */
+/* ================= FORUM ================= */
 function ServicesSection() {
   const { user } = useUserAuth();
   const router = useRouter();
@@ -113,19 +115,63 @@ function ServicesSection() {
   }
 
   return (
-    <main style={mainStyle}>
-      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+    <main style={forumLayout}>
+      {/* LEFT SIDE */}
+      <div style={forumMain}>
+        <h2 style={sectionTitle}>Discussion</h2>
+
         {services.map((s) => (
           <div
             key={s.id || s.name}
             onClick={() =>
               router.push(`/Project/DiscussionBoard?topic=${s.name}`)
             }
-            style={cardStyle}
+            style={forumRow}
           >
-            {s.name}
+            <div style={iconBox}>💬</div>
+
+            <div style={{ flex: 1 }}>
+              <div style={forumName}>{s.name}</div>
+              <div style={forumSub}>Click to enter discussion</div>
+            </div>
+
+            <div style={forumStats}>
+              <div>--</div>
+              <span style={{ color: theme.textDim }}>Threads</span>
+            </div>
+
+            <div style={forumStats}>
+              <div>--</div>
+              <span style={{ color: theme.textDim }}>Messages</span>
+            </div>
           </div>
         ))}
+      </div>
+
+      {/* RIGHT SIDEBAR */}
+      <div style={sidebar}>
+        <div style={sidebarBox}>
+          <h3 style={sidebarTitle}>Members Online</h3>
+          <p style={{ color: theme.textDim }}>
+            User1, User2, User3...
+          </p>
+        </div>
+
+        <div style={sidebarBox}>
+          <h3 style={sidebarTitle}>Latest Posts</h3>
+          <p style={{ color: theme.textDim }}>
+            New discussion activity will appear here
+          </p>
+        </div>
+
+        <div style={sidebarBox}>
+          <h3 style={sidebarTitle}>Forum Stats</h3>
+          <p style={{ color: theme.textDim }}>
+            Threads: -- <br />
+            Messages: -- <br />
+            Members: --
+          </p>
+        </div>
       </div>
     </main>
   );
@@ -171,26 +217,92 @@ const authBtn = {
   cursor: "pointer",
 };
 
-const mainStyle = {
+/* ===== FORUM LAYOUT ===== */
+
+const forumLayout = {
+  display: "grid",
+  gridTemplateColumns: "3fr 1fr",
+  gap: "20px",
+  padding: "40px",
   background: theme.background,
   minHeight: "100vh",
-  padding: "40px",
+};
+
+const forumMain = {
+  display: "flex",
+  flexDirection: "column" as const,
+  gap: "12px",
+  color: theme.textMain, 
+};
+
+const sectionTitle = {
+  borderBottom: `2px solid ${theme.primaryRed}`,
+  paddingBottom: "10px",
   color: theme.textMain,
 };
 
-const cardStyle = {
+const forumRow = {
+  display: "flex",
+  alignItems: "center",
+  gap: "15px",
   padding: "15px",
-  marginBottom: "12px",
   backgroundColor: "#1c1c1c",
   border: `1px solid ${theme.border}`,
-  borderLeft: `3px solid ${theme.primaryRed}`,
   borderRadius: "6px",
   cursor: "pointer",
+  color: theme.textMain, 
+};
+
+const iconBox = {
+  width: "40px",
+  height: "40px",
+  backgroundColor: theme.primaryRed,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: "6px",
+};
+
+const forumName = {
+  fontWeight: "bold",
   color: theme.textMain,
-  transition: "0.2s",
+};
+
+const forumSub = {
+  fontSize: "12px",
+  color: theme.textDim,
+};
+
+const forumStats = {
+  width: "80px",
+  textAlign: "center" as const,
+  color: theme.textMain,
+};
+
+/* ===== SIDEBAR ===== */
+
+const sidebar = {
+  display: "flex",
+  flexDirection: "column" as const,
+  gap: "15px",
+};
+
+const sidebarBox = {
+  backgroundColor: "#1c1c1c",
+  border: `1px solid ${theme.border}`,
+  padding: "15px",
+  borderRadius: "6px",
+};
+
+const sidebarTitle = {
+  borderBottom: `1px solid ${theme.border}`,
+  marginBottom: "10px",
+  paddingBottom: "5px",
+  color: theme.textMain,
 };
 
 /* ================= APP ================= */
+
 export default function JoystickJunkies() {
   return (
     <UserAuthContextProvider>
